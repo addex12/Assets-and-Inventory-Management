@@ -49,7 +49,7 @@ Follow these steps to set up the project locally:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/your-repo/orbalia-inventory.git
+   git clone https://github.com/addex12/Assets-and-Inventory-Management.git
    cd Orbalia Inventory Management
    ```
 
@@ -106,13 +106,13 @@ We welcome contributions! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) f
 
 ## 🛡️ Security
 
-If you discover any security issues, please report them to [security@orbalia.com](mailto:security@orbalia.com).
+If you discover any security issues, please report them to [gizawadugna@gmail.com](mailto:gizawadugna@gmail.com).
 
 ---
 
 ## 📧 Support
 
-For help and support, contact our team at [support@orbalia.com](mailto:support@orbalia.com).
+For help and support, contact our team at [gizawadugna@gmail.com](mailto:gizawadugna@gmail.com).
 
 ---
 

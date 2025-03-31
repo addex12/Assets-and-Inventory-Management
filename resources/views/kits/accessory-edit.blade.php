@@ -18,6 +18,6 @@
 </div>
 
 <input type="hidden" name="pivot_id" value="{{$item->id}}">
-{{-- <input class="form-control" type="text" name="quantity" id="quantity" value="{{ old('quantity', $item->quantity) }}" /> --}}
+        -- <input class="form-control" type="text" name="quantity" id="quantity" value="{{ old('quantity', $item->quantity) }}" /> 
 
 @stop

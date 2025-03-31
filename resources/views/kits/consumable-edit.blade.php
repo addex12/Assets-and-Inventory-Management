@@ -21,4 +21,14 @@
 <input type="hidden" name="pivot_id" value="{{$item->id}}">
 {{-- <input class="form-control" type="text" name="quantity" id="quantity" value="{{ old('quantity', $item->quantity) }}" /> --}}
 
+@if ($consumable)
+    <form action="{{ route('consumables.update', $consumable->id) }}" method="POST">
+        @csrf
+        @method('PUT')
+        <!-- Form fields for editing the consumable -->
+        <input type="text" name="name" value="{{ $consumable->name }}" required>
+        <button type="submit">Update</button>
+    </form>
+@endif
+
 @stop
