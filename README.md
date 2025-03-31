@@ -1,18 +1,17 @@
-# 📦 Inventory Management System
+# 📦 Orbalia Inventory Management System
 
-Welcome to the **Inventory Management System**! This is an open-source, feature-rich asset management system built on the robust Laravel framework. Manage your assets, track inventory, and streamline your IT operations with ease.
+Welcome to the **Orbalia Inventory Management System**! This is a powerful, feature-rich asset management solution designed to help you efficiently manage your inventory, track assets, and streamline your operations.
 
 ---
 
 ## 🚀 Features
 
-- **Asset Management**: Track and manage your assets effortlessly.
-- **User-Friendly Interface**: Intuitive and responsive design for seamless navigation.
-- **Customizable**: Tailor the system to meet your specific needs.
+- **Comprehensive Asset Management**: Easily track and manage your assets.
+- **Customizable Interface**: Tailor the system to meet your unique requirements.
 - **Multi-Language Support**: Available in multiple languages for global use.
-- **Secure**: Built with modern security practices to protect your data.
-- **Backup & Restore**: Easily back up and restore your data.
-- **Integration Ready**: Supports integrations with Google Maps, Slack, and more.
+- **Secure and Reliable**: Built with modern security practices to protect your data.
+- **Backup & Restore**: Ensure your data is safe with easy backup and restore options.
+- **Integration Ready**: Supports integrations with third-party tools like Google Maps and Slack.
 
 ---
 
@@ -22,14 +21,14 @@ Welcome to the **Inventory Management System**! This is an open-source, feature-
 - **Frontend**: Blade Templates, Livewire
 - **Database**: MySQL
 - **Containerization**: Docker & Docker Compose
-- **Deployment**: Heroku-ready
+- **Deployment**: Heroku-ready or self-hosted
 
 ---
 
 ## 📂 Project Structure
 
 ```
-Inventory Management/
+Orbalia Inventory Management/
 ├── app/                # Application logic
 ├── bootstrap/          # Framework bootstrap files
 ├── config/             # Configuration files
@@ -50,8 +49,8 @@ Follow these steps to set up the project locally:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/snipe/snipe-it.git
-   cd Inventory Management
+   git clone https://github.com/your-repo/orbalia-inventory.git
+   cd Orbalia Inventory Management
    ```
 
 2. **Install Dependencies**:
@@ -107,13 +106,13 @@ We welcome contributions! Please read our [CONTRIBUTING.md](./CONTRIBUTING.md) f
 
 ## 🛡️ Security
 
-If you discover any security issues, please report them to [abuse@snipeitapp.com](mailto:abuse@snipeitapp.com). See [SECURITY.md](./SECURITY.md) for more details.
+If you discover any security issues, please report them to [security@orbalia.com](mailto:security@orbalia.com).
 
 ---
 
 ## 📧 Support
 
-For help and support, visit our [documentation](https://snipeit.readme.io/) or join our community forums.
+For help and support, contact our team at [support@orbalia.com](mailto:support@orbalia.com).
 
 ---
 
