@@ -1,0 +1,1 @@
+Locations<?php /**PATH /home2/flipperschool/inventory.flipperschool.com/storage/framework/views/7de39832650ca11deb03fc8adb6ea929.blade.php ENDPATH**/ ?>

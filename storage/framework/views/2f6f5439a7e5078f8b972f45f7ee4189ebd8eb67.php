@@ -1,0 +1,16 @@
+<?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('admin')): ?>
+    <?php if((config('services.baremetrics.enabled')=='true') && (config('services.baremetrics.app_key')) && (config('services.baremetrics.stripe_id'))): ?>
+        <script>
+            !function(){if(window.barepay&&window.barepay.created)window.console&&console.error&&console.error("Barepay snippet included twice.");else{window.barepay={created:!0};var a=document.createElement("script");a.src="https://baremetrics-dunning.baremetrics.com/js/application.js",a.async=!0;var b=document.getElementsByTagName("script")[0];b.parentNode.insertBefore(a,b),
+
+                window.barepay.params = {
+                    access_token_id: "<?php echo e(config('services.baremetrics.app_key')); ?>", // Your Recover API public key
+                    customer_oid: "<?php echo e(config('services.baremetrics.stripe_id')); ?>" // Customer ID whose card you're looking to update
+                }
+
+            }}();
+        </script>
+        <?php else: ?>
+    <?php endif; ?>
+<?php endif; ?>
+<?php /**PATH /home2/flipperschool/inventory.flipperschool.com/resources/views/partials/bpay.blade.php ENDPATH**/ ?>

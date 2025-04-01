@@ -1,0 +1,1 @@
+Admin Settings<?php /**PATH /home2/flipperschool/inventory.flipperschool.com/storage/framework/views/c77e7c4166a472b2bf5f846617f2af69.blade.php ENDPATH**/ ?>

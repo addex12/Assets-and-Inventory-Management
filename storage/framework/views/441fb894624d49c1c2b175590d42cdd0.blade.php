@@ -1,0 +1,1 @@
+<x-icon type="home" /><span class="sr-only">Dashboard</span>

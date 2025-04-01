@@ -1,0 +1,1 @@
+Assets<?php /**PATH /home2/flipperschool/inventory.flipperschool.com/storage/framework/views/ac1ddd426f94846b23991ba06ba9bdaa.blade.php ENDPATH**/ ?>
