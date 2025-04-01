@@ -23,6 +23,8 @@ use App\Http\Controllers\ViewAssetsController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\EmployeeController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -126,6 +128,16 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('departments', DepartmentsController::class, [
         'parameters' => ['department' => 'department_id'],
     ]);
+
+    /*
+    * Schools
+    */
+    Route::resource('schools', SchoolController::class);
+
+    /*
+    * Employees
+    */
+    Route::resource('employees', EmployeeController::class);
 });
 
 /*
@@ -541,3 +553,20 @@ Route::middleware(['auth'])->get(
     '/',
     [DashboardController::class, 'index']
 )->name('home');
+
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
