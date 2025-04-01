@@ -1,13 +1,14 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Truncation;
+<?php namespace Rollbar\Truncation;
 
 use \Rollbar\Payload\EncodedPayload;
 
 class AbstractStrategy implements IStrategy
 {
-    public function __construct(protected $truncation)
+    protected $truncation;
+    
+    public function __construct($truncation)
     {
+        $this->truncation = $truncation;
     }
     
     public function execute(EncodedPayload $payload)

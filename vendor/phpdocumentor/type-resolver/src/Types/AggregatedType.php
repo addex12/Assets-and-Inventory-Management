@@ -107,7 +107,7 @@ abstract class AggregatedType implements Type, IteratorAggregate
      */
     private function add(Type $type): void
     {
-        if ($type instanceof static) {
+        if ($type instanceof self) {
             foreach ($type->getIterator() as $subType) {
                 $this->add($subType);
             }

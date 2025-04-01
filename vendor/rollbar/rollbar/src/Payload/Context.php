@@ -1,35 +1,35 @@
-<?php declare(strict_types=1);
+<?php namespace Rollbar\Payload;
 
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
-
-class Context implements SerializerInterface
+class Context implements \Serializable
 {
-    use UtilitiesTrait;
+    private $pre;
+    private $post;
+    private $utilities;
 
-    public function __construct(private ?array $pre, private ?array $post)
+    public function __construct($pre, $post)
     {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setPre($pre);
+        $this->setPost($post);
     }
 
-    public function getPre(): ?array
+    public function getPre()
     {
         return $this->pre;
     }
 
-    public function setPre(array $pre): self
+    public function setPre($pre)
     {
         $this->pre = $pre;
         return $this;
     }
 
-    public function getPost(): ?array
+    public function getPost()
     {
         return $this->post;
     }
 
-    public function setPost(array $post): self
+    public function setPost($post)
     {
         $this->post = $post;
         return $this;
@@ -42,6 +42,13 @@ class Context implements SerializerInterface
             "post" => $this->post,
         );
         
-        return $this->utilities()->serializeForRollbarInternal($result);
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, null, $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

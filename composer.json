@@ -104,9 +104,6 @@
     "classmap": [
       "database"
     ],
-    "files": [
-      "bootstrap/helpers.php"
-  ],
     "psr-4": {
       "App\\": "app/",
       "Database\\Factories\\": "database/factories/",

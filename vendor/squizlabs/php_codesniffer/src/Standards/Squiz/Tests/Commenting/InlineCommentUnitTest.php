@@ -4,19 +4,14 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Standards\Squiz\Tests\Commenting;
 
 use PHP_CodeSniffer\Tests\Standards\AbstractSniffUnitTest;
 
-/**
- * Unit test class for the InlineComment sniff.
- *
- * @covers \PHP_CodeSniffer\Standards\Squiz\Sniffs\Commenting\InlineCommentSniff
- */
-final class InlineCommentUnitTest extends AbstractSniffUnitTest
+class InlineCommentUnitTest extends AbstractSniffUnitTest
 {
 
 
@@ -30,7 +25,7 @@ final class InlineCommentUnitTest extends AbstractSniffUnitTest
      *
      * @return array<int, int>
      */
-    public function getErrorList($testFile='')
+    public function getErrorList($testFile='InlineCommentUnitTest.inc')
     {
         switch ($testFile) {
         case 'InlineCommentUnitTest.inc':
@@ -52,7 +47,6 @@ final class InlineCommentUnitTest extends AbstractSniffUnitTest
                 126 => 2,
                 130 => 2,
                 149 => 1,
-                189 => 1,
             ];
 
             return $errors;

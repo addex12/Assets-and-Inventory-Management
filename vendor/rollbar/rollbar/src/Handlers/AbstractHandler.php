@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Handlers;
+<?php namespace Rollbar\Handlers;
 
 use Rollbar\Rollbar;
 use Rollbar\RollbarLogger;
@@ -10,11 +8,13 @@ abstract class AbstractHandler
 {
     protected $registered = false;
     
+    protected $logger = null;
+    
     protected $previousHandler = null;
     
-    public function __construct(
-        protected RollbarLogger $logger
-    ) {
+    public function __construct(RollbarLogger $logger)
+    {
+        $this->logger = $logger;
     }
     
     public function logger()
@@ -27,7 +27,7 @@ abstract class AbstractHandler
         return $this->registered;
     }
     
-    public function handle(...$args)
+    public function handle()
     {
         if (!$this->registered()) {
             throw new \Exception(get_class($this) . ' has not been set up.');

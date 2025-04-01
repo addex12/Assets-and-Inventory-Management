@@ -1,10 +1,6 @@
 <?php namespace Rollbar;
 
 use Rollbar\DataBuilderInterface;
-use Rollbar\Payload\Body;
-use Rollbar\Payload\Data;
-use Rollbar\Payload\Message;
-use Throwable;
 
 class FakeDataBuilder implements DataBuilderInterface
 {
@@ -16,11 +12,9 @@ class FakeDataBuilder implements DataBuilderInterface
         self::$args[] = $arr;
     }
 
-    public function makeData(string $level, Throwable|string $toLog, array $context): Data
+    public function makeData($level, $toLog, $context)
     {
         self::$logged[] = array($level, $toLog, $context);
-
-        return new Data('test', new Body(new Message('test')));
     }
     
     public function setCustom()

@@ -1,41 +1,40 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
-
-use Rollbar\UtilitiesTrait;
+<?php namespace Rollbar\Payload;
 
 class Trace implements ContentInterface
 {
-    use UtilitiesTrait;
+    private $frames;
+    private $exception;
+    private $utilities;
 
-    public function __construct(
-        private array $frames,
-        private ExceptionInfo $exception
-    ) {
+    public function __construct(array $frames, ExceptionInfo $exception)
+    {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setFrames($frames);
+        $this->setException($exception);
     }
 
-    public function getKey(): string
+    public function getKey()
     {
         return 'trace';
     }
 
-    public function getFrames(): array
+    public function getFrames()
     {
         return $this->frames;
     }
 
-    public function setFrames(array $frames): self
+    public function setFrames(array $frames)
     {
         $this->frames = $frames;
         return $this;
     }
 
-    public function getException(): ExceptionInfo
+    public function getException()
     {
         return $this->exception;
     }
 
-    public function setException(ExceptionInfo $exception): self
+    public function setException(ExceptionInfo $exception)
     {
         $this->exception = $exception;
         return $this;
@@ -47,6 +46,11 @@ class Trace implements ContentInterface
             "frames" => $this->frames,
             "exception" => $this->exception,
         );
-        return $this->utilities()->serializeForRollbar($result);
+        return $this->utilities->serializeForRollbar($result);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

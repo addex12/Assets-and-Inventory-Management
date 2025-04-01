@@ -1,143 +1,136 @@
-<?php declare(strict_types=1);
+<?php namespace Rollbar\Payload;
 
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
-
-class Request implements SerializerInterface
+class Request implements \Serializable
 {
-    use UtilitiesTrait;
-
-    private ?string $url = null;
-    private ?string $method = null;
-    private ?array $headers = null;
-    private ?array $params = null;
-    private ?array $get = null;
-    private ?string $queryString = null;
-    private ?array $post = null;
-    private ?string $body = null;
-    private ?string $userIp = null;
-    private array $extra = array();
+    private $url;
+    private $method;
+    private $headers;
+    private $params;
+    private $get;
+    private $queryString;
+    private $post;
+    private $body;
+    private $userIp;
+    private $extra = array();
+    private $utilities;
 
     public function __construct()
     {
+        $this->utilities = new \Rollbar\Utilities();
     }
 
-    public function getUrl(): ?string
+    public function getUrl()
     {
         return $this->url;
     }
 
-    public function setUrl(?string $url): self
+    public function setUrl($url)
     {
         $this->url = $url;
         return $this;
     }
 
-    public function getMethod(): ?string
+    public function getMethod()
     {
         return $this->method;
     }
 
-    public function setMethod(?string $method): self
+    public function setMethod($method)
     {
         $this->method = $method;
         return $this;
     }
 
-    public function getHeaders(): ?array
+    public function getHeaders()
     {
         return $this->headers;
     }
 
-    public function setHeaders(?array $headers = null): self
+    public function setHeaders(array $headers = null)
     {
         $this->headers = $headers;
         return $this;
     }
 
-    public function getParams(): ?array
+    public function getParams()
     {
         return $this->params;
     }
 
-    public function setParams(?array $params = null): self
+    public function setParams(array $params = null)
     {
         $this->params = $params;
         return $this;
     }
 
-    public function getGet(): ?array
+    public function getGet()
     {
         return $this->get;
     }
 
-    public function setGet(?array $get = null): self
+    public function setGet(array $get = null)
     {
         $this->get = $get;
         return $this;
     }
 
-    public function getQueryString(): ?string
+    public function getQueryString()
     {
         return $this->queryString;
     }
 
-    public function setQueryString(?string $queryString): self
+    public function setQueryString($queryString)
     {
         $this->queryString = $queryString;
         return $this;
     }
 
-    public function getPost(): ?array
+    public function getPost()
     {
         return $this->post;
     }
 
-    public function setPost(?array $post = null): self
+    public function setPost(array $post = null)
     {
         $this->post = $post;
         return $this;
     }
 
-    public function getBody(): ?string
+    public function getBody()
     {
         return $this->body;
     }
 
-    public function setBody(?string $body): self
+    public function setBody($body)
     {
         $this->body = $body;
         return $this;
     }
 
-    public function getUserIp(): ?string
+    public function getUserIp()
     {
         return $this->userIp;
     }
 
-    public function setUserIp(?string $userIp): self
+    public function setUserIp($userIp)
     {
         $this->userIp = $userIp;
         return $this;
     }
 
-    public function getExtras(): array
+    public function getExtras()
     {
         return $this->extra;
     }
 
-    public function setExtras(array $extras): self
+    public function setExtras($extras)
     {
         $this->extra = $extras;
-        return $this;
     }
 
-    public function setSession(array $session): self
+    public function setSession($session)
     {
         $this->extra['session'] = $session;
-        return $this;
     }
 
     public function serialize()
@@ -157,6 +150,13 @@ class Request implements SerializerInterface
             $result[$key] = $val;
         }
         
-        return $this->utilities()->serializeForRollbarInternal($result, array_keys($this->extra));
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, array_keys($this->extra), $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

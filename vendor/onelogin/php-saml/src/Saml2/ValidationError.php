@@ -2,13 +2,15 @@
 /**
  * This file is part of php-saml.
  *
+ * (c) OneLogin Inc
+ *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  *
  * @package OneLogin
- * @author  Sixto Martin <sixto.martin.garcia@gmail.com>
- * @license MIT https://github.com/SAML-Toolkits/php-saml/blob/master/LICENSE
- * @link    https://github.com/SAML-Toolkits/php-saml
+ * @author  OneLogin Inc <saml-info@onelogin.com>
+ * @license MIT https://github.com/onelogin/php-saml/blob/master/LICENSE
+ * @link    https://github.com/onelogin/php-saml
  */
 
 namespace OneLogin\Saml2;
@@ -16,7 +18,7 @@ namespace OneLogin\Saml2;
 use Exception;
 
 /**
- * ValidationError class of SAML PHP Toolkit
+ * ValidationError class of OneLogin PHP Toolkit
  *
  * This class implements another custom Exception handler,
  * related to exceptions that happens during validation process.

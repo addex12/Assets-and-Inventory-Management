@@ -176,21 +176,16 @@ class TruncationTest extends BaseRollbarTest
     /**
      * @dataProvider truncateProvider
      */
-    public function testTruncate($dataName, $data, array $assertions = array())
+    public function testTruncate($dataName, $data)
     {
+        echo "\n== \Rollbar\Performance\TruncationTest::testTruncate for $dataName ==\n";
+        
         $payload = new EncodedPayload($data);
         $payload->encode();
         
         $payload = $this->truncate->truncate($payload);
         
-        $performance = $this->truncate->getLastRun();
-        foreach ($assertions as $assertion) {
-            $this->assertMatchesRegularExpression(
-                $assertion,
-                $performance,
-                "Performance of $dataName did not meet expectations"
-            );
-        }
+        echo $this->truncate->getLastRun();
     }
     
     public function truncateProvider()
@@ -202,43 +197,27 @@ class TruncationTest extends BaseRollbarTest
         
         $stringsTestData = $stringsTest->executeProvider();
         $stringsTestData = $stringsTestData['truncate strings to 1024'][0];
-
+        
         $framesTestData = $framesTest->executeProvider();
         $framesTestData = $framesTestData['nothing to truncate using trace key'][0];
         
         $data = array(
             array(
                 "StringsStrategyTest - truncate strings to 1024",
-                $stringsTestData,
-                array (
-                  '/^Memory usage: (\d|[12]\d) bytes/m', // < 30 bytes
-                  '/^Execution time: \d.\d+ ms/m' // < 10 ms
-                )
+                $stringsTestData
             ),
             array(
                 "FramesStrategyTest - nothing to truncate using trace key",
-                $framesTestData,
-                array (
-                  '/^Memory usage: (\d|[12]\d) bytes/m', // < 30 bytes
-                  '/^Execution time: \d.\d+ ms/m' // < 10 ms
-                )
+                $framesTestData
             ),
             array(
                 "MassivePayloadTest",
-                $massivePayloadTest->executeProvider(),
-                array (
-                  '/^Memory usage: (\d|[12]\d{1,7}) bytes/m', // < 20,000,000 bytes
-                  '/^Execution time: (\d{1,2}.\d+) ms/m' // < 100 ms
-                )
+                $massivePayloadTest->executeProvider()
             ),
             array(
                 "OneLongString",
                 $stringsTest->payloadStructureProvider(
                     str_repeat("A", \Rollbar\Truncation\Truncation::MAX_PAYLOAD_SIZE+1)
-                ),
-                array (
-                  '/^Memory usage: (\d|[12]\d) bytes/m', // < 30 bytes
-                  '/^Execution time: \d.\d+ ms/m' // < 10 ms
                 )
             )
         );

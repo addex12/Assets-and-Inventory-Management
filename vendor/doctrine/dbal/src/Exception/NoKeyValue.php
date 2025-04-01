@@ -6,7 +6,11 @@ use Doctrine\DBAL\Exception;
 
 use function sprintf;
 
-/** @internal */
+/**
+ * @internal
+ *
+ * @psalm-immutable
+ */
 final class NoKeyValue extends Exception
 {
     public static function fromColumnCount(int $columnCount): self
@@ -14,8 +18,8 @@ final class NoKeyValue extends Exception
         return new self(
             sprintf(
                 'Fetching as key-value pairs requires the result to contain at least 2 columns, %d given.',
-                $columnCount,
-            ),
+                $columnCount
+            )
         );
     }
 }

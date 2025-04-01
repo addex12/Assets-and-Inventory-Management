@@ -28,7 +28,7 @@ class CastToEnum implements TypeCasting
     private readonly bool $isNullable;
     private readonly Type $type;
     private ?UnitEnum $default = null;
-    private readonly TypeCastingInfo $info;
+    private readonly string $propertyName;
     /** @var class-string<UnitEnum|BackedEnum> */
     private string $class;
 
@@ -38,12 +38,7 @@ class CastToEnum implements TypeCasting
     public function __construct(ReflectionProperty|ReflectionParameter $reflectionProperty)
     {
         [$this->type, $this->class, $this->isNullable] = $this->init($reflectionProperty);
-        $this->info = TypeCastingInfo::fromAccessor($reflectionProperty);
-    }
-
-    public function info(): TypeCastingInfo
-    {
-        return $this->info;
+        $this->propertyName = $reflectionProperty->getName();
     }
 
     /**
@@ -57,7 +52,7 @@ class CastToEnum implements TypeCasting
         bool $emptyStringAsNull = false,
     ): void {
         if (Type::Mixed->equals($this->type) || in_array($this->class, [BackedEnum::class , UnitEnum::class], true)) {
-            (null !== $className && enum_exists($className)) || throw new MappingFailed('`'.$this->info->targetName.'` type is `'.($this->class ?? 'mixed').'` but the specified class via the `$className` argument is invalid or could not be found.');
+            (null !== $className && enum_exists($className)) || throw new MappingFailed('`'.$this->propertyName.'` type is `'.($this->class ?? 'mixed').'` but the specified class via the `$className` argument is invalid or could not be found.');
             $this->class = $className;
         }
 
@@ -76,7 +71,7 @@ class CastToEnum implements TypeCasting
         return match (true) {
             null !== $value => $this->cast($value),
             $this->isNullable => $this->default,
-            default => throw TypeCastingFailed::dueToNotNullableType($this->class, info: $this->info),
+            default => throw TypeCastingFailed::dueToNotNullableType($this->class),
         };
     }
 
@@ -89,7 +84,7 @@ class CastToEnum implements TypeCasting
             return $value;
         }
 
-        is_string($value) || throw throw TypeCastingFailed::dueToInvalidValue($value, $this->class, info: $this->info);
+        is_string($value) || throw throw TypeCastingFailed::dueToInvalidValue($value, $this->class);
 
         try {
             $enum = new ReflectionEnum($this->class);
@@ -101,7 +96,7 @@ class CastToEnum implements TypeCasting
 
             return $this->class::from($backedValue); /* @phpstan-ignore-line */
         } catch (Throwable $exception) {
-            throw throw TypeCastingFailed::dueToInvalidValue($value, $this->class, $exception, $this->info);
+            throw throw TypeCastingFailed::dueToInvalidValue($value, $this->class, $exception);
         }
     }
 

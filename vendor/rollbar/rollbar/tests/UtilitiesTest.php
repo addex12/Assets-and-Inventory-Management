@@ -1,12 +1,9 @@
 <?php namespace Rollbar;
 
-use Rollbar\Payload\Level;
-use Rollbar\TestHelpers\CustomSerializable;
 use Rollbar\TestHelpers\CycleCheck\ParentCycleCheck;
 use Rollbar\TestHelpers\CycleCheck\ChildCycleCheck;
 use Rollbar\TestHelpers\CycleCheck\ParentCycleCheckSerializable;
 use Rollbar\TestHelpers\CycleCheck\ChildCycleCheckSerializable;
-use Rollbar\TestHelpers\DeprecatedSerializable;
 
 class UtilitiesTest extends BaseRollbarTest
 {
@@ -67,15 +64,15 @@ class UtilitiesTest extends BaseRollbarTest
         }
     }
 
-    public function testValidateBooleanThrowsExceptionOnNullWhenNullAreNotAllowed()
+    public function testValidateBooleanThrowsException()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(get_class(new \InvalidArgumentException()));
         Utilities::validateBoolean(null, "foo", false);
     }
 
     public function testValidateBooleanWithInvalidBoolean()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(get_class(new \InvalidArgumentException()));
         Utilities::validateBoolean("not a boolean");
     }
 
@@ -84,7 +81,6 @@ class UtilitiesTest extends BaseRollbarTest
         Utilities::validateBoolean(true, "foo", false);
         Utilities::validateBoolean(true);
         Utilities::validateBoolean(null);
-        $this->expectNotToPerformAssertions();
     }
 
     public function testSerializeForRollbar()
@@ -129,17 +125,17 @@ class UtilitiesTest extends BaseRollbarTest
         
         $result = Utilities::serializeForRollbar($obj, null, $objectHashes);
         
-        $this->assertMatchesRegularExpression(
+        $this->assertRegExp(
             '/<CircularReference.*/',
             $result["obj"]["value"]["child"]["value"]["parent"]
         );
         
-        $this->assertMatchesRegularExpression(
+        $this->assertRegExp(
             '/<CircularReference.*/',
             $result["serializedObj"]["child"]["parent"]
         );
         
-        $this->assertMatchesRegularExpression(
+        $this->assertRegExp(
             '/<CircularReference.*/',
             $result["payload"]["data"]["body"]["extra"][0]["value"]["child"]["value"]["parent"]
         );
@@ -175,60 +171,5 @@ class UtilitiesTest extends BaseRollbarTest
         $this->assertArrayHasKey('two', $result['one']);
         $this->assertArrayHasKey('three', $result['one']['two']);
         $this->assertArrayHasKey('four', $result['one']['two']['three']);
-    }
-
-    public function testSerializationOfDeprecatedSerializable()
-    {
-        $data = ['foo' => 'bar'];
-
-        $obj = array(
-            "serializedObj" => new DeprecatedSerializable($data),
-        );
-        $objectHashes = array();
-
-        // Make sure the deprecation notice is sent if the object implements deprecated Serializable interface
-        set_error_handler(function (
-            int $errno,
-            string $errstr,
-        ) : bool {
-            $this->assertStringContainsString("Serializable", $errstr);
-            $this->assertStringContainsString("deprecated", $errstr);
-            return true;
-        }, E_USER_DEPRECATED);
-
-        $result = Utilities::serializeForRollbar($obj, null, $objectHashes);
-
-        // Clear the handler, so it does not mess with other tests.
-        restore_error_handler();
-
-        $this->assertEquals(['foo' => 'bar'], $result['serializedObj']);
-    }
-
-    public function testSerializationOfCustomSerializable()
-    {
-        $data = ['foo' => 'bar'];
-
-        $obj = array(
-            "serializedObj" => new CustomSerializable($data),
-        );
-        $objectHashes = array();
-
-        // Make sure the deprecation notice is NOT sent if the object implements Serializable but it's using
-        // __serialize and __unserialize properly
-        set_error_handler(function (
-            int $errno,
-            string $errstr,
-        ) : bool {
-            $this->assertStringNotContainsString("Serializable", $errstr);
-            $this->assertStringNotContainsString("deprecated", $errstr);
-            return true;
-        }, E_USER_DEPRECATED);
-
-        $result = Utilities::serializeForRollbar($obj, null, $objectHashes);
-
-        // Clear the handler, so it does not mess with other tests.
-        restore_error_handler();
-
-        $this->assertEquals(['foo' => 'bar'], $result['serializedObj']);
     }
 }

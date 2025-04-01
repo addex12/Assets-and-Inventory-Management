@@ -4,7 +4,7 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer\Util;
@@ -82,8 +82,6 @@ define('T_MATCH_DEFAULT', 'PHPCS_T_MATCH_DEFAULT');
 define('T_ATTRIBUTE_END', 'PHPCS_T_ATTRIBUTE_END');
 define('T_ENUM_CASE', 'PHPCS_T_ENUM_CASE');
 define('T_TYPE_INTERSECTION', 'PHPCS_T_TYPE_INTERSECTION');
-define('T_TYPE_OPEN_PARENTHESIS', 'PHPCS_T_TYPE_OPEN_PARENTHESIS');
-define('T_TYPE_CLOSE_PARENTHESIS', 'PHPCS_T_TYPE_CLOSE_PARENTHESIS');
 
 // Some PHP 5.5 tokens, replicated for lower versions.
 if (defined('T_FINALLY') === false) {
@@ -630,7 +628,6 @@ final class Tokens
         T_UNSET        => T_UNSET,
         T_EMPTY        => T_EMPTY,
         T_SELF         => T_SELF,
-        T_PARENT       => T_PARENT,
         T_STATIC       => T_STATIC,
     ];
 
@@ -777,14 +774,12 @@ final class Tokens
      * For example T_CLASS tokens appear very infrequently in a file, and
      * therefore have a high weighting.
      *
-     * If there are no weightings for any of the specified tokens, the first token
-     * seen in the passed array will be returned.
+     * Returns false if there are no weightings for any of the specified tokens.
      *
      * @param array<int|string> $tokens The token types to get the highest weighted
      *                                  type for.
      *
-     * @return int The highest weighted token.
-     *             On equal "weight", returns the first token of that particular weight.
+     * @return int|false The highest weighted token.
      */
     public static function getHighestWeightedToken(array $tokens)
     {

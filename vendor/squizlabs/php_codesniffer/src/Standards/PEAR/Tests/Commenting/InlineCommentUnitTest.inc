@@ -27,5 +27,3 @@ function test()
 ### use the code from the regex
 ### over hre
 ### ok?
-
-#️⃣ Apparently the emoji keycap number sign (hash) also works and turns this into a comment.

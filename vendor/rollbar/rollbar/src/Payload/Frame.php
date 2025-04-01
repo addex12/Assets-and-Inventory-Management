@@ -1,102 +1,94 @@
-<?php declare(strict_types=1);
+<?php namespace Rollbar\Payload;
 
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
-
-/**
- * Represents a stack trace frame, as returned by debug_backtrace. Note that
- * in the Zend engine, Throwable::getTrace() is a thin wrapper around
- * debug_backtrace.
- */
-class Frame implements SerializerInterface
+class Frame implements \Serializable
 {
-    use UtilitiesTrait;
+    private $filename;
+    private $lineno;
+    private $colno;
+    private $method;
+    private $code;
+    private $context;
+    private $args;
+    private $utilities;
 
-    private ?int $lineno = null;
-    private ?int $colno = null;
-    private ?string $method = null;
-    private ?string $code = null;
-    private ?Context $context = null;
-    private ?array $args = null;
-
-    public function __construct(private ?string $filename)
+    public function __construct($filename)
     {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setFilename($filename);
     }
 
-    public function getFilename(): ?string
+    public function getFilename()
     {
         return $this->filename;
     }
 
-    public function setFilename(?string $filename): self
+    public function setFilename($filename)
     {
         $this->filename = $filename;
         return $this;
     }
 
-    public function getLineno(): ?int
+    public function getLineno()
     {
         return $this->lineno;
     }
 
-    public function setLineno(?int $lineno): self
+    public function setLineno($lineno)
     {
         $this->lineno = $lineno;
         return $this;
     }
 
-    public function getColno(): ?int
+    public function getColno()
     {
         return $this->colno;
     }
 
-    public function setColno(?int $colno): self
+    public function setColno($colno)
     {
         $this->colno = $colno;
         return $this;
     }
 
-    public function getMethod(): ?string
+    public function getMethod()
     {
         return $this->method;
     }
 
-    public function setMethod(?string $method): self
+    public function setMethod($method)
     {
         $this->method = $method;
         return $this;
     }
 
-    public function getCode(): ?string
+    public function getCode()
     {
         return $this->code;
     }
 
-    public function setCode(?string $code): self
+    public function setCode($code)
     {
         $this->code = $code;
         return $this;
     }
 
-    public function getContext(): ?Context
+    public function getContext()
     {
         return $this->context;
     }
 
-    public function setContext(Context $context): self
+    public function setContext(Context $context)
     {
         $this->context = $context;
         return $this;
     }
 
-    public function getArgs(): ?array
+    public function getArgs()
     {
         return $this->args;
     }
 
-    public function setArgs(array $args): self
+    public function setArgs(array $args)
     {
         $this->args = $args;
         return $this;
@@ -114,6 +106,13 @@ class Frame implements SerializerInterface
             "args" => $this->args
         );
         
-        return $this->utilities()->serializeForRollbarInternal($result);
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, null, $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Truncation;
+<?php namespace Rollbar\Truncation;
 
 use \Rollbar\Payload\EncodedPayload;
 

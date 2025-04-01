@@ -1,8 +1,6 @@
 <?php namespace Rollbar\TestHelpers\CycleCheck;
 
-use Rollbar\SerializerInterface;
-
-class ParentCycleCheckSerializable implements SerializerInterface
+class ParentCycleCheckSerializable implements \Serializable
 {
     public $child;
     
@@ -13,8 +11,17 @@ class ParentCycleCheckSerializable implements SerializerInterface
     
     public function serialize()
     {
+        $objectHashes = \Rollbar\Utilities::GetObjectHashes();
         return array(
-            "child" => \Rollbar\Utilities::serializeForRollbarInternal($this->child)
+            "child" => \Rollbar\Utilities::serializeForRollbar(
+                $this->child,
+                null,
+                $objectHashes
+            )
         );
+    }
+    
+    public function unserialize($serialized)
+    {
     }
 }

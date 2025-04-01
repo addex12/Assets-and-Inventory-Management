@@ -1,22 +1,17 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Senders;
+<?php namespace Rollbar\Senders;
 
 /**
  * Adapted from:
  * https://github.com/segmentio/analytics-php/blob/master/lib/Segment/Consumer/Socket.php
  */
 
-use CurlHandle;
 use Rollbar\Response;
 use Rollbar\Payload\Payload;
 use Rollbar\Payload\EncodedPayload;
-use Rollbar\UtilitiesTrait;
 
 class CurlSender implements SenderInterface
 {
-    use UtilitiesTrait;
-
+    private $utilities;
     private $endpoint;
     private $timeout;
     private $proxy = null;
@@ -32,15 +27,16 @@ class CurlSender implements SenderInterface
         $this->endpoint = \Rollbar\Defaults::get()->endpoint() . 'item/';
         $this->timeout = \Rollbar\Defaults::get()->timeout();
         
+        $this->utilities = new \Rollbar\Utilities();
         if (isset($_ENV['ROLLBAR_ENDPOINT']) && !isset($opts['endpoint'])) {
             $opts['endpoint'] = $_ENV['ROLLBAR_ENDPOINT'];
         }
         if (array_key_exists('endpoint', $opts)) {
-            $this->utilities()->validateString($opts['endpoint'], 'opts["endpoint"]', null, false);
+            $this->utilities->validateString($opts['endpoint'], 'opts["endpoint"]', null, false);
             $this->endpoint = $opts['endpoint'];
         }
         if (array_key_exists('timeout', $opts)) {
-            $this->utilities()->validateInteger($opts['timeout'], 'opts["timeout"]', 0, null, false);
+            $this->utilities->validateInteger($opts['timeout'], 'opts["timeout"]', 0, null, false);
             $this->timeout = $opts['timeout'];
         }
         if (array_key_exists('proxy', $opts)) {
@@ -48,7 +44,7 @@ class CurlSender implements SenderInterface
         }
 
         if (array_key_exists('verifyPeer', $opts)) {
-            $this->utilities()->validateBoolean($opts['verifyPeer'], 'opts["verifyPeer"]', false);
+            $this->utilities->validateBoolean($opts['verifyPeer'], 'opts["verifyPeer"]', false);
             $this->verifyPeer = $opts['verifyPeer'];
         }
         if (array_key_exists('ca_cert_path', $opts)) {
@@ -61,7 +57,7 @@ class CurlSender implements SenderInterface
         return $this->endpoint;
     }
 
-    public function send(EncodedPayload $payload, string $accessToken): Response
+    public function send(EncodedPayload $payload, $accessToken)
     {
         $handle = curl_init();
 
@@ -81,7 +77,7 @@ class CurlSender implements SenderInterface
         return new Response($statusCode, $result, $uuid);
     }
 
-    public function sendBatch(array $batch, string $accessToken): void
+    public function sendBatch($batch, $accessToken)
     {
         if ($this->multiHandle === null) {
             $this->multiHandle = curl_multi_init();
@@ -96,7 +92,7 @@ class CurlSender implements SenderInterface
         $this->checkForCompletedRequests($accessToken);
     }
 
-    public function wait(string $accessToken, int $max = 0)
+    public function wait($accessToken, $max = 0)
     {
         if (count($this->inflightRequests) <= $max) {
             return;
@@ -110,7 +106,7 @@ class CurlSender implements SenderInterface
         }
     }
 
-    private function maybeSendMoreBatchRequests(string $accessToken)
+    private function maybeSendMoreBatchRequests($accessToken)
     {
         $max = $this->maxBatchRequests - count($this->inflightRequests);
         if ($max <= 0) {
@@ -129,7 +125,7 @@ class CurlSender implements SenderInterface
         $this->batchRequests = array_slice($this->batchRequests, $idx);
     }
 
-    public function setCurlOptions(CurlHandle $handle, EncodedPayload $payload, string $accessToken)
+    public function setCurlOptions($handle, EncodedPayload $payload, $accessToken)
     {
         curl_setopt($handle, CURLOPT_URL, $this->endpoint);
         curl_setopt($handle, CURLOPT_POST, true);
@@ -157,7 +153,7 @@ class CurlSender implements SenderInterface
         }
     }
 
-    private function checkForCompletedRequests(string $accessToken)
+    private function checkForCompletedRequests($accessToken)
     {
         do {
             $curlResponse = curl_multi_exec($this->multiHandle, $active);
@@ -174,7 +170,7 @@ class CurlSender implements SenderInterface
         $this->removeFinishedRequests($accessToken);
     }
 
-    private function removeFinishedRequests(string $accessToken)
+    private function removeFinishedRequests($accessToken)
     {
         while ($info = curl_multi_info_read($this->multiHandle)) {
             $handle = $info['handle'];

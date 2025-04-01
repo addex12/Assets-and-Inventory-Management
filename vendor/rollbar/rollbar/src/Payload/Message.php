@@ -1,41 +1,42 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
-
-use Rollbar\UtilitiesTrait;
+<?php namespace Rollbar\Payload;
 
 class Message implements ContentInterface
 {
-    use UtilitiesTrait;
+    private $body;
+    private $backtrace;
+    private $utilities;
 
     public function __construct(
-        private string $body,
-        private ?array $backtrace = null
+        $body,
+        $backtrace = null
     ) {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setBody($body);
+        $this->setBacktrace($backtrace);
     }
 
-    public function getKey(): string
+    public function getKey()
     {
         return 'message';
     }
 
-    public function getBody(): string
+    public function getBody()
     {
         return $this->body;
     }
 
-    public function setBody(string $body): self
+    public function setBody($body)
     {
         $this->body = $body;
         return $this;
     }
     
-    public function getBacktrace(): ?array
+    public function getBacktrace()
     {
         return $this->backtrace;
     }
 
-    public function setBacktrace(?array $backtrace): self
+    public function setBacktrace($backtrace)
     {
         $this->backtrace = $backtrace;
         return $this;
@@ -47,6 +48,11 @@ class Message implements ContentInterface
             "body" => $this->getBody(),
             "backtrace" => $this->getBacktrace()
         );
-        return $this->utilities()->serializeForRollbar($toSerialize);
+        return $this->utilities->serializeForRollbar($toSerialize);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

@@ -1,217 +1,229 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
+<?php namespace Rollbar\Payload;
 
 use Rollbar\Defaults;
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
 
-class Data implements SerializerInterface
+class Data implements \Serializable
 {
-    use UtilitiesTrait;
+    private $environment;
+    private $body;
+    private $level;
+    private $timestamp;
+    private $codeVersion;
+    private $platform;
+    private $language;
+    private $framework;
+    private $context;
+    private $request;
+    private $person;
+    private $server;
+    private $custom;
+    private $fingerprint;
+    private $title;
+    private $uuid;
+    private $notifier;
+    private $utilities;
 
-    private Level|string|null $level = null;
-    private ?int $timestamp = null;
-    private ?string $codeVersion = null;
-    private ?string $platform = null;
-    private ?string $language = null;
-    private ?string $framework = null;
-    private ?string $context = null;
-    private ?Request $request = null;
-    private ?Person $person = null;
-    private ?Server $server = null;
-    private ?array $custom = null;
-    private ?string $fingerprint = null;
-    private ?string $title = null;
-    private ?string $uuid = null;
-    private ?Notifier $notifier = null;
-
-    public function __construct(private string $environment, private Body $body)
+    public function __construct($environment, Body $body)
     {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setEnvironment($environment);
+        $this->setBody($body);
     }
 
-    public function getEnvironment(): string
+    public function getEnvironment()
     {
         return $this->environment;
     }
 
-    public function setEnvironment(string $environment): self
+    public function setEnvironment($environment)
     {
         $this->environment = $environment;
         return $this;
     }
 
-    public function getBody(): Body
+    public function getBody()
     {
         return $this->body;
     }
 
-    public function setBody(Body $body): self
+    public function setBody(Body $body)
     {
         $this->body = $body;
         return $this;
     }
 
-    public function getLevel(): Level|string|null
+    /**
+     * @return Level
+     */
+    public function getLevel()
     {
         return $this->level;
     }
 
-    public function setLevel(Level|string|null $level): self
+    public function setLevel($level)
     {
         $this->level = $level;
         return $this;
     }
 
-    public function getTimestamp(): ?int
+    public function getTimestamp()
     {
         return $this->timestamp;
     }
 
-    public function setTimestamp(?int $timestamp): self
+    public function setTimestamp($timestamp)
     {
         $this->timestamp = $timestamp;
         return $this;
     }
 
-    public function getCodeVersion(): ?string
+    public function getCodeVersion()
     {
         return $this->codeVersion;
     }
 
-    public function setCodeVersion(?string $codeVersion): self
+    public function setCodeVersion($codeVersion)
     {
         $this->codeVersion = $codeVersion;
         return $this;
     }
 
-    public function getPlatform(): ?string
+    public function getPlatform()
     {
         return $this->platform;
     }
 
-    public function setPlatform(?string $platform): self
+    public function setPlatform($platform)
     {
         $this->platform = $platform;
         return $this;
     }
 
-    public function getLanguage(): ?string
+    public function getLanguage()
     {
         return $this->language;
     }
 
-    public function setLanguage(?string $language): self
+    public function setLanguage($language)
     {
         $this->language = $language;
         return $this;
     }
 
-    public function getFramework(): ?string
+    public function getFramework()
     {
         return $this->framework;
     }
 
-    public function setFramework(?string $framework): self
+    public function setFramework($framework)
     {
         $this->framework = $framework;
         return $this;
     }
 
-    public function getContext(): ?string
+    public function getContext()
     {
         return $this->context;
     }
 
-    public function setContext(?string $context): self
+    public function setContext($context)
     {
         $this->context = $context;
         return $this;
     }
 
-    public function getRequest(): ?Request
+    /**
+     * @return Request
+     */
+    public function getRequest()
     {
         return $this->request;
     }
 
-    public function setRequest(?Request $request = null): self
+    public function setRequest(Request $request = null)
     {
         $this->request = $request;
         return $this;
     }
 
-    public function getPerson(): ?Person
+    /**
+     * @return Person
+     */
+    public function getPerson()
     {
         return $this->person;
     }
 
-    public function setPerson(?Person $person = null): self
+    public function setPerson(Person $person = null)
     {
         $this->person = $person;
         return $this;
     }
 
-    public function getServer(): ?Server
+    /**
+     * @return Server
+     */
+    public function getServer()
     {
         return $this->server;
     }
 
-    public function setServer(?Server $server = null): self
+    public function setServer(Server $server = null)
     {
         $this->server = $server;
         return $this;
     }
 
-    public function getCustom(): ?array
+    public function getCustom()
     {
         return $this->custom;
     }
 
-    public function setCustom(?array $custom = null): self
+    public function setCustom(array $custom = null)
     {
         $this->custom = $custom;
         return $this;
     }
 
-    public function getFingerprint(): ?string
+    public function getFingerprint()
     {
         return $this->fingerprint;
     }
 
-    public function setFingerprint(?string $fingerprint): self
+    public function setFingerprint($fingerprint)
     {
         $this->fingerprint = $fingerprint;
         return $this;
     }
 
-    public function getTitle(): ?string
+    public function getTitle()
     {
         return $this->title;
     }
 
-    public function setTitle(?string $title): self
+    public function setTitle($title)
     {
         $this->title = $title;
         return $this;
     }
 
-    public function getUuid(): ?string
+    public function getUuid()
     {
         return $this->uuid;
     }
 
-    public function setUuid(?string $uuid): self
+    public function setUuid($uuid)
     {
         $this->uuid = $uuid;
         return $this;
     }
 
-    public function getNotifier(): ?Notifier
+    public function getNotifier()
     {
         return $this->notifier;
     }
 
-    public function setNotifier(Notifier $notifier): self
+    public function setNotifier(Notifier $notifier)
     {
         $this->notifier = $notifier;
         return $this;
@@ -239,6 +251,13 @@ class Data implements SerializerInterface
             "notifier" => $this->notifier,
         );
         
-        return $this->utilities()->serializeForRollbarInternal($result);
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, null, $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

@@ -55,8 +55,6 @@ use Aws\AwsClient;
  * @method \GuzzleHttp\Promise\Promise untagResourceAsync(array $args = [])
  * @method \Aws\Result updateLoggingConfiguration(array $args = [])
  * @method \GuzzleHttp\Promise\Promise updateLoggingConfigurationAsync(array $args = [])
- * @method \Aws\Result updateScraper(array $args = [])
- * @method \GuzzleHttp\Promise\Promise updateScraperAsync(array $args = [])
  * @method \Aws\Result updateWorkspaceAlias(array $args = [])
  * @method \GuzzleHttp\Promise\Promise updateWorkspaceAliasAsync(array $args = [])
  */

@@ -25,17 +25,10 @@ final class CastToInt implements TypeCasting
 {
     private readonly bool $isNullable;
     private ?int $default = null;
-    private readonly TypeCastingInfo $info;
 
     public function __construct(ReflectionProperty|ReflectionParameter $reflectionProperty)
     {
         $this->isNullable = $this->init($reflectionProperty);
-        $this->info = TypeCastingInfo::fromAccessor($reflectionProperty);
-    }
-
-    public function info(): TypeCastingInfo
-    {
-        return $this->info;
     }
 
     public function setOptions(
@@ -53,16 +46,16 @@ final class CastToInt implements TypeCasting
         if (null === $value) {
             return match ($this->isNullable) {
                 true => $this->default,
-                false => throw TypeCastingFailed::dueToNotNullableType('integer', info: $this->info),
+                false => throw TypeCastingFailed::dueToNotNullableType('integer'),
             };
         }
 
-        is_scalar($value) || throw TypeCastingFailed::dueToInvalidValue($value, Type::Int->value, info: $this->info);
+        is_scalar($value) || throw TypeCastingFailed::dueToInvalidValue($value, Type::Int->value);
 
         $int = filter_var($value, Type::Int->filterFlag());
 
         return match ($int) {
-            false => throw TypeCastingFailed::dueToInvalidValue($value, Type::Int->value, info: $this->info),
+            false => throw TypeCastingFailed::dueToInvalidValue($value, Type::Int->value),
             default => $int,
         };
     }

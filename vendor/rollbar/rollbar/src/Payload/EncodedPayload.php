@@ -1,32 +1,32 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
+<?php namespace Rollbar\Payload;
 
 class EncodedPayload
 {
+    protected $data = null;
     protected $encoded = null;
     protected $size = 0;
     
-    public function __construct(protected array $data)
+    public function __construct(array $data)
     {
+        $this->data = $data;
     }
     
-    public function data(): array
+    public function data()
     {
         return $this->data;
     }
     
-    public function size(): int
+    public function size()
     {
         return $this->size;
     }
     
-    public function decreaseSize(int $amount): void
+    public function decreaseSize($amount)
     {
         $this->size -= $amount;
     }
     
-    public function encode(?array $data = null): void
+    public function encode($data = null)
     {
         if ($data !== null) {
             $this->data = $data;
@@ -49,7 +49,7 @@ class EncodedPayload
         return (string)$this->encoded();
     }
     
-    public function encoded(): ?string
+    public function encoded()
     {
         return $this->encoded;
     }

@@ -1,43 +1,43 @@
-<?php declare(strict_types=1);
+<?php namespace Rollbar\Payload;
 
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
-
-class Notifier implements SerializerInterface
+class Notifier implements \Serializable
 {
     const NAME = "rollbar-php";
-    const VERSION = "3.1.2";
+    const VERSION = "2.1.0";
 
-    use UtilitiesTrait;
-
-    public static function defaultNotifier(): self
+    public static function defaultNotifier()
     {
         return new Notifier(self::NAME, self::VERSION);
     }
 
-    public function __construct(private string $name, private string $version)
+    private $name;
+    private $version;
+    private $utilities;
+
+    public function __construct($name, $version)
     {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setName($name);
+        $this->setVersion($version);
     }
 
-    public function getName(): string
+    public function getName()
     {
         return $this->name;
     }
 
-    public function setName(string $name): self
+    public function setName($name)
     {
         $this->name = $name;
         return $this;
     }
 
-    public function getVersion(): string
+    public function getVersion()
     {
         return $this->version;
     }
 
-    public function setVersion(string $version): self
+    public function setVersion($version)
     {
         $this->version = $version;
         return $this;
@@ -50,6 +50,13 @@ class Notifier implements SerializerInterface
             "version" => $this->version,
         );
         
-        return $this->utilities()->serializeForRollbarInternal($result);
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, null, $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

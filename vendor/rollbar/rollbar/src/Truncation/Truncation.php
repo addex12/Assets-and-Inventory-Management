@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Truncation;
+<?php namespace Rollbar\Truncation;
 
 use \Rollbar\Payload\EncodedPayload;
 use \Rollbar\Config;
@@ -8,14 +6,17 @@ use \Rollbar\Config;
 class Truncation
 {
     const MAX_PAYLOAD_SIZE = 131072; // 128 * 1024
+    private $config;
  
     protected static $truncationStrategies = array(
         "Rollbar\Truncation\FramesStrategy",
         "Rollbar\Truncation\StringsStrategy"
     );
     
-    public function __construct(private Config $config)
+    public function __construct(Config $config)
     {
+        $this->config = $config;
+
         if ($custom = $config->getCustomTruncation()) {
             $this->registerStrategy($custom);
         }

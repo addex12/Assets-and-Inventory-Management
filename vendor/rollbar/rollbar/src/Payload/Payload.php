@@ -1,40 +1,41 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
+<?php namespace Rollbar\Payload;
 
 use Rollbar\DataBuilder;
 use Rollbar\Config;
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
 
-class Payload implements SerializerInterface
+class Payload implements \Serializable
 {
-    use UtilitiesTrait;
+    private $data;
+    private $accessToken;
+    private $utilities;
 
-    public function __construct(private Data $data, private string $accessToken)
+    public function __construct(Data $data, $accessToken)
     {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setData($data);
+        $this->setAccessToken($accessToken);
     }
 
     /**
      * @return Data
      */
-    public function getData(): Data
+    public function getData()
     {
         return $this->data;
     }
 
-    public function setData(Data $data): self
+    public function setData(Data $data)
     {
         $this->data = $data;
         return $this;
     }
 
-    public function getAccessToken(): string
+    public function getAccessToken()
     {
         return $this->accessToken;
     }
 
-    public function setAccessToken(string $accessToken): self
+    public function setAccessToken($accessToken)
     {
         $this->accessToken = $accessToken;
         return $this;
@@ -48,6 +49,11 @@ class Payload implements SerializerInterface
             "access_token" => $this->accessToken,
         );
 
-        return $this->utilities()->serializeForRollbar($result, null, $objectHashes, $maxDepth);
+        return $this->utilities->serializeForRollbar($result, null, $objectHashes, $maxDepth);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

@@ -1,26 +1,25 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
+<?php namespace Rollbar\Payload;
 
 class TraceChain implements ContentInterface
 {
-    public function __construct(private array $traces)
+    private $traces;
+
+    public function __construct(array $traces)
     {
+        $this->setTraces($traces);
     }
 
-    public function getKey(): string
+    public function getKey()
     {
         return 'trace_chain';
     }
 
-    public function getTraces(): array
+    public function getTraces()
     {
         return $this->traces;
     }
 
-    public function setTraces(array $traces): self
+    public function setTraces($traces)
     {
         $this->traces = $traces;
         return $this;
@@ -30,14 +29,15 @@ class TraceChain implements ContentInterface
     {
         $mapValue = function ($value) {
             if ($value instanceof \Serializable) {
-                trigger_error("Using the Serializable interface has been deprecated.", E_USER_DEPRECATED);
-                return $value->serialize();
-            }
-            if ($value instanceof SerializerInterface) {
                 return $value->serialize();
             }
             return $value;
         };
         return array_map($mapValue, $this->traces);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

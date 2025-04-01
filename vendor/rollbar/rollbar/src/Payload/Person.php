@@ -1,9 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
+<?php namespace Rollbar\Payload;
 
 /**
  * Suppress PHPMD.ShortVariable for this class, since using property $id is
@@ -11,46 +6,51 @@ use Rollbar\UtilitiesTrait;
  *
  * @SuppressWarnings(PHPMD.ShortVariable)
  */
-class Person implements SerializerInterface
+class Person implements \Serializable
 {
-    use UtilitiesTrait;
+    private $id;
+    private $username;
+    private $email;
+    private $extra;
+    private $utilities;
 
-    public function __construct(
-        private string $id,
-        private ?string $username = null,
-        private ?string $email = null,
-        private array $extra = []
-    ) {
+    public function __construct($id, $username = null, $email = null, array $extra = null)
+    {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setId($id);
+        $this->setUsername($username);
+        $this->setEmail($email);
+        $this->extra = $extra == null ? array() : $extra;
     }
 
-    public function getId(): string
+    public function getId()
     {
         return $this->id;
     }
 
-    public function setId(string $id): self
+    public function setId($id)
     {
         $this->id = $id;
         return $this;
     }
 
-    public function getUsername(): ?string
+    public function getUsername()
     {
         return $this->username;
     }
 
-    public function setUsername(?string $username): self
+    public function setUsername($username)
     {
         $this->username = $username;
         return $this;
     }
 
-    public function getEmail(): ?string
+    public function getEmail()
     {
         return $this->email;
     }
 
-    public function setEmail(?string $email): self
+    public function setEmail($email)
     {
         $this->email = $email;
         return $this;
@@ -58,7 +58,7 @@ class Person implements SerializerInterface
 
     public function __get($name)
     {
-        return $this->extra[$name] ?? null;
+        return isset($this->extra[$name]) ? $this->extra[$name] : null;
     }
 
     public function __set($name, $val)
@@ -77,6 +77,13 @@ class Person implements SerializerInterface
             $result[$key] = $val;
         }
         
-        return $this->utilities()->serializeForRollbarInternal($result, array_keys($this->extra));
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, array_keys($this->extra), $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

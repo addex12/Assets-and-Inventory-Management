@@ -4,7 +4,6 @@ namespace Livewire\Commands;
 
 use Illuminate\Support\Facades\File;
 
-#[\AllowDynamicProperties]
 class MoveCommand extends FileManipulationCommand
 {
     protected $signature = 'livewire:move {name} {new-name} {--force} {--inline}';
@@ -34,7 +33,7 @@ class MoveCommand extends FileManipulationCommand
         $test = $this->renameTest();
         $this->refreshComponentAutodiscovery();
 
-        if ($class) $this->line("<options=bold,reverse;fg=green> COMPONENT MOVED </> 🤙\n");
+        $this->line("<options=bold,reverse;fg=green> COMPONENT MOVED </> 🤙\n");
         $class && $this->line("<options=bold;fg=green>CLASS:</> {$this->parser->relativeClassPath()} <options=bold;fg=green>=></> {$this->newParser->relativeClassPath()}");
         if (! $inline) $view && $this->line("<options=bold;fg=green>VIEW:</>  {$this->parser->relativeViewPath()} <options=bold;fg=green>=></> {$this->newParser->relativeViewPath()}");
         if ($test) $test && $this->line("<options=bold;fg=green>Test:</>  {$this->parser->relativeTestPath()} <options=bold;fg=green>=></> {$this->newParser->relativeTestPath()}");
@@ -81,7 +80,7 @@ class MoveCommand extends FileManipulationCommand
         if (!File::exists($oldTestPath) || File::exists($newTestPath)) {
             return false;
         }
-
+        
         $this->ensureDirectoryExists($newTestPath);
         File::move($oldTestPath, $newTestPath);
         return $newTestPath;

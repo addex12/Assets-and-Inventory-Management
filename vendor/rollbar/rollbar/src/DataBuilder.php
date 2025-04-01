@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
+<?php namespace Rollbar;
 
 use Rollbar\Payload\Context;
 use Rollbar\Payload\Message;
@@ -15,7 +13,7 @@ use Rollbar\Payload\Frame;
 use Rollbar\Payload\TraceChain;
 use Rollbar\Payload\ExceptionInfo;
 use Rollbar\Rollbar;
-use Throwable;
+use Rollbar\Exceptions\PersonFuncException;
 
 class DataBuilder implements DataBuilderInterface
 {
@@ -177,10 +175,6 @@ class DataBuilder implements DataBuilderInterface
     {
         $fromConfig = isset($config['local_vars_dump']) ? $config['local_vars_dump'] : null;
         $this->localVarsDump = self::$defaults->localVarsDump($fromConfig);
-        if ($this->localVarsDump && !empty(ini_get('zend.exception_ignore_args'))) {
-            ini_set('zend.exception_ignore_args', '0');
-            assert(empty(ini_get('zend.exception_ignore_args')) || ini_get('zend.exception_ignore_args') == "0");
-        }
     }
     
     protected function setCaptureErrorStacktraces($config)
@@ -229,6 +223,9 @@ class DataBuilder implements DataBuilderInterface
         
         if (!$this->requestBody && $this->rawRequestBody) {
             $this->requestBody = file_get_contents("php://input");
+            if (version_compare(PHP_VERSION, '5.6.0') < 0) {
+                $_SERVER['php://input'] = $this->requestBody;
+            }
         }
     }
 
@@ -364,11 +361,11 @@ class DataBuilder implements DataBuilderInterface
 
     /**
      * @param string $level
-     * @param Throwable|string $toLog
+     * @param \Exception | \Throwable | string $toLog
      * @param $context
      * @return Data
      */
-    public function makeData(string $level, Throwable|string $toLog, array $context): Data
+    public function makeData($level, $toLog, $context)
     {
         $env = $this->getEnvironment();
         $body = $this->getBody($toLog, $context);
@@ -415,10 +412,10 @@ class DataBuilder implements DataBuilderInterface
     }
 
     /**
-     * @param Throwable $exc
+     * @param \Throwable|\Exception $exc
      * @return Trace|TraceChain
      */
-    public function getExceptionTrace(Throwable $exc): Trace|TraceChain
+    public function getExceptionTrace($exc)
     {
         $chain = array();
         $chain[] = $this->makeTrace($exc, $this->includeExcCodeContext);
@@ -442,12 +439,12 @@ class DataBuilder implements DataBuilderInterface
     }
 
     /**
-     * @param Throwable $exception
-     * @param bool $includeContext whether or not to include context
-     * @param string|null $classOverride
+     * @param \Throwable|\Exception $exception
+     * @param Boolean $includeContext whether or not to include context
+     * @param string $classOverride
      * @return Trace
      */
-    public function makeTrace(Throwable $exception, bool $includeContext, ?string $classOverride = null): Trace
+    public function makeTrace($exception, $includeContext, $classOverride = null)
     {
         if ($this->captureErrorStacktraces) {
             $frames = $this->makeFrames($exception, $includeContext);
@@ -467,15 +464,13 @@ class DataBuilder implements DataBuilderInterface
         $frames = array();
         
         foreach ($this->getTrace($exception) as $frameInfo) {
-            // filename and lineno may be missing in pathological cases, like
-            // register_shutdown_function(fn() => var_dump(debug_backtrace()));
-            $filename = $frameInfo['file'] ?? null;
-            $lineno = $frameInfo['line'] ?? null;
-            $method = $frameInfo['function'] ?? null;
+            $filename = isset($frameInfo['file']) ? $frameInfo['file'] : null;
+            $lineno = isset($frameInfo['line']) ? $frameInfo['line'] : null;
+            $method = isset($frameInfo['function']) ? $frameInfo['function'] : null;
             if (isset($frameInfo['class'])) {
                 $method = $frameInfo['class'] . "::" . $method;
             }
-            $args = $frameInfo['args'] ?? null;
+            $args = isset($frameInfo['args']) ? $frameInfo['args'] : null;
 
             $frame = new Frame($filename);
             $frame->setLineno($lineno)
@@ -499,7 +494,7 @@ class DataBuilder implements DataBuilderInterface
 
     private function addCodeContextToFrame(Frame $frame, $filename, $line)
     {
-        if (null === $filename || !file_exists($filename)) {
+        if (!file_exists($filename)) {
             return;
         }
 
@@ -548,25 +543,18 @@ class DataBuilder implements DataBuilderInterface
 
     protected function getLevel($level, $toLog)
     {
-        // resolve null level to default values, if we can
-        if ($level === null) {
+        if (is_null($level)) {
             if ($toLog instanceof ErrorWrapper) {
-                $level = $this->errorLevels[$toLog->errorLevel] ?? null;
+                $level = isset($this->errorLevels[$toLog->errorLevel]) ? $this->errorLevels[$toLog->errorLevel] : null;
             } elseif ($toLog instanceof \Exception) {
                 $level = $this->exceptionLevel;
             } else {
                 $level = $this->messageLevel;
             }
         }
-        if ($level !== null) {
-            $level = strtolower($level);
-            $level = $this->psrLevels[$level] ?? null;
-            if ($level !== null) {
-                // this is a well-known PSR level: "error", "notice", "info", etc.
-                return $this->levelFactory->fromName($level);
-            }
-        }
-        return null;
+        $level = strtolower($level);
+        $level = isset($this->psrLevels[$level]) ? $this->psrLevels[$level] : null;
+        return $this->levelFactory->fromName($level);
     }
 
     protected function getTimestamp()
@@ -628,11 +616,7 @@ class DataBuilder implements DataBuilderInterface
         
         if ($request->getMethod() === 'PUT') {
             $postData = array();
-            $body = $request->getBody();
-            if ($body !== null) {
-                // PHP reports warning if parse_str() detects more than max_input_vars items.
-                @parse_str($body, $postData);
-            }
+            parse_str($request->getBody(), $postData);
             $request->setPost($postData);
         }
         
@@ -830,34 +814,26 @@ class DataBuilder implements DataBuilderInterface
         return $this->requestBody;
     }
 
-    /**
-     * Get the user's IP, by inspecting the http header X-Real-IP, or if not
-     * that first address from the http header X-Forwarded-For, and if not that
-     * then the remote IP connecting to the web server, if available.
-     *
+    /*
      * @SuppressWarnings(PHPMD.Superglobals)
      */
-    protected function getUserIp(): ?string
+    protected function getUserIp()
     {
         if (!isset($_SERVER) || $this->captureIP === false) {
             return null;
         }
         
-        $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+        $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null;
         
-        $forwardFor = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? null;
+        $forwardFor = isset($_SERVER['HTTP_X_FORWARDED_FOR']) ? $_SERVER['HTTP_X_FORWARDED_FOR'] : null;
         if ($forwardFor) {
             // return everything until the first comma
             $parts = explode(',', $forwardFor);
             $ipAddress = $parts[0];
         }
-        $realIp = $_SERVER['HTTP_X_REAL_IP'] ?? null;
+        $realIp = isset($_SERVER['HTTP_X_REAL_IP']) ? $_SERVER['HTTP_X_REAL_IP'] : null;
         if ($realIp) {
             $ipAddress = $realIp;
-        }
-
-        if ($ipAddress === null) {
-            return null;
         }
         
         if ($this->captureIP === DataBuilder::ANONYMIZE_IP) {
@@ -890,7 +866,7 @@ class DataBuilder implements DataBuilderInterface
         $personData = $this->person;
         if (!isset($personData) && is_callable($this->personFunc)) {
             try {
-                $personData = ($this->personFunc)();
+                $personData = call_user_func($this->personFunc);
             } catch (\Exception $exception) {
                 Rollbar::scope(array('person_fn' => null))->
                     log(Level::ERROR, $exception);
@@ -901,7 +877,7 @@ class DataBuilder implements DataBuilderInterface
             return null;
         }
 
-        $identifier = (string)$personData['id'];
+        $identifier = $personData['id'];
 
         $email = null;
         if ($this->captureEmail && isset($personData['email'])) {
@@ -977,77 +953,34 @@ class DataBuilder implements DataBuilderInterface
         return $this->customDataMethod;
     }
 
-    /**
-     * Returns the processed custom value to be sent with the payload. If there
-     * is no custom value an empty array is returned.
-     *
-     * @param Throwable|string $toLog
-     * @param array            $context
-     *
-     * @return array
-     */
-    protected function getCustomForPayload(Throwable|string $toLog, array $context): array
+    protected function getCustomForPayload($toLog, $context)
     {
-        $custom = $this->resolveCustomContent($this->getCustom());
+        $custom = $this->getCustom();
 
+        // Make this an array if possible:
+        if ($custom instanceof \Serializable) {
+            $custom = $custom->serialize();
+        } elseif (is_null($custom)) {
+            $custom = array();
+        } elseif (!is_array($custom)) {
+            $custom = get_object_vars($custom);
+        }
+        
         if ($customDataMethod = $this->getCustomDataMethod()) {
-            $customDataMethodContext = $context['custom_data_method_context'] ?? null;
-
+            $customDataMethodContext = isset($context['custom_data_method_context']) ?
+                $context['custom_data_method_context'] :
+                null;
+                
             $customDataMethodResult = $customDataMethod($toLog, $customDataMethodContext);
-
+            
             $custom = array_merge($custom, $customDataMethodResult);
         }
-
+        
         unset($context['custom_data_method_context']);
 
         return $custom;
     }
-
-    /**
-     * This method transforms $custom into an array that can be processed and sent in the payload.
-     *
-     * @param mixed $custom
-     *
-     * @return array
-     * @throws \Exception If Serializable::serialize() returns an invalid type an exception can be thrown.
-     *                    This can be removed once support for Serializable has been removed.
-     */
-    protected function resolveCustomContent(mixed $custom): array
-    {
-        // This check is placed first because it should return a string|null, and we want to return an array.
-        if ($custom instanceof \Serializable) {
-            // We don't return this value instead we run it through the rest of the checks. The same is true for the
-            // next check.
-            if (method_exists($custom, '__serialize')) {
-                $custom = $custom->__serialize();
-            } else {
-                trigger_error("Using the Serializable interface has been deprecated.", E_USER_DEPRECATED);
-                $custom = $custom->serialize();
-            }
-        } else {
-            if ($custom instanceof SerializerInterface) {
-                $custom = $custom->serialize();
-            }
-        }
-        // Values that resolve to false e.g. null, false, 0, 0.0, "", and [], we will ignore.
-        // Otherwise, after all other checks we will assign it to the "message" key.
-        if (!$custom) {
-            return [];
-        }
-        if (is_object($custom)) {
-            trigger_error(
-                "Using an object that does not implement the "
-                . "Rollbar\SerializerInterface interface has been deprecated.",
-                E_USER_DEPRECATED
-            );
-            return get_object_vars($custom);
-        }
-        if (is_array($custom)) {
-            return $custom;
-        }
-        return ['message' => $custom];
-    }
-
+    
     public function addCustom($key, $data)
     {
         if ($this->custom === null) {
@@ -1148,7 +1081,7 @@ class DataBuilder implements DataBuilderInterface
      * @var string $errfile
      * @var string $errline
      *
-     * @return array
+     * @return Rollbar\ErrorWrapper
      */
     protected function buildErrorTrace($errfile, $errline)
     {
@@ -1168,42 +1101,10 @@ class DataBuilder implements DataBuilderInterface
         
         return $backTrace;
     }
-
-    /**
-     * Check if this PHP install has the `xdebug_get_function_stack` function.
-     *
-     * @return bool
-     */
-    private function hasXdebugGetFunctionStack()
-    {
-        // TBD: allow the consumer to disable use of Xdebug even if it's
-        // TBD: installed in the consumer's runtime environment?
-
-        // if the function doesn't exist, we're obviously unable to use it
-        if (! function_exists('xdebug_get_function_stack')) {
-            return false;
-        }
-
-        // if the function's not provided by Xdebug, we can't guarantee an
-        // API conformance so we refuse to use it
-        $version = phpversion('xdebug');
-        if (false === $version) {
-            return false;
-        }
-
-        // in XDebug 2 and prior, existence of the function implied usability
-        if (version_compare($version, '3.0.0', '<')) {
-            return true;
-        }
-
-        // in XDebug 3 and later, the function is defined but disabled unless
-        // the xdebug mode parameter includes it
-        return false === strpos(ini_get('xdebug.mode'), 'develop') ? false : true;
-    }
     
     private function fetchErrorTrace()
     {
-        if ($this->hasXdebugGetFunctionStack()) {
+        if (function_exists('xdebug_get_function_stack')) {
             return array_reverse(\xdebug_get_function_stack());
         } else {
             return debug_backtrace($this->localVarsDump ? 0 : DEBUG_BACKTRACE_IGNORE_ARGS);
@@ -1242,7 +1143,7 @@ class DataBuilder implements DataBuilderInterface
         return $backTrace;
     }
     
-    public function detectGitBranch($allowExec = true): ?string
+    public function detectGitBranch($allowExec = true)
     {
         if ($allowExec) {
             static $cachedValue;
@@ -1256,15 +1157,19 @@ class DataBuilder implements DataBuilderInterface
         return null;
     }
     
-    private static function getGitBranch(): ?string
+    private static function getGitBranch()
     {
-        if (function_exists('shell_exec')) {
-            $stdRedirCmd = Utilities::isWindows() ? ' > NUL' : ' 2> /dev/null';
-            $output = shell_exec('git rev-parse --abbrev-ref HEAD' . $stdRedirCmd);
-            if (is_string($output)) {
-                return rtrim($output);
+        try {
+            if (function_exists('shell_exec')) {
+                $stdRedirCmd = Utilities::isWindows() ? " > NUL" : " 2> /dev/null";
+                $output = rtrim(shell_exec('git rev-parse --abbrev-ref HEAD' . $stdRedirCmd));
+                if ($output) {
+                    return $output;
+                }
             }
+            return null;
+        } catch (\Exception $e) {
+            return null;
         }
-        return null;
     }
 }

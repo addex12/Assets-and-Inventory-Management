@@ -1,10 +1,13 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
+<?php namespace Rollbar;
 
 final class Utilities
 {
     private static $ObjectHashes;
+    
+    public static function getObjectHashes()
+    {
+        return self::$ObjectHashes;
+    }
     
     public static function isWindows()
     {
@@ -74,15 +77,6 @@ final class Utilities
         }
     }
 
-    /**
-     * Serialize all, or the given keys, from the given object and store it
-     * in this class's internal store (see self::$ObjectHashes).
-     */
-    public static function serializeForRollbarInternal($obj, array $customKeys = null)
-    {
-        return self::serializeForRollbar($obj, $customKeys, self::$ObjectHashes);
-    }
-
     public static function serializeForRollbar(
         $obj,
         array $customKeys = null,
@@ -106,28 +100,23 @@ final class Utilities
         }
 
         foreach ($obj as $key => $val) {
-            try {
-                if (is_object($val)) {
-                    $val = self::serializeObject(
-                        $val,
-                        $customKeys,
-                        $objectHashes,
-                        $maxDepth,
-                        $depth
-                    );
-                } elseif (is_array($val)) {
-                    $val = self::serializeForRollbar(
-                        $val,
-                        $customKeys,
-                        $objectHashes,
-                        $maxDepth,
-                        $depth+1
-                    );
-                }
-            } catch (\Throwable $e) {
-                $val = 'Error during serialization: '.$e->getMessage();
+            if (is_object($val)) {
+                $val = self::serializeObject(
+                    $val,
+                    $customKeys,
+                    $objectHashes,
+                    $maxDepth,
+                    $depth
+                );
+            } elseif (is_array($val)) {
+                $val = self::serializeForRollbar(
+                    $val,
+                    $customKeys,
+                    $objectHashes,
+                    $maxDepth,
+                    $depth+1
+                );
             }
-
             
             if ($customKeys !== null && in_array($key, $customKeys)) {
                 $returnVal[$key] = $val;
@@ -152,14 +141,6 @@ final class Utilities
             $serialized = self::circularReferenceLabel($obj);
         } else {
             if ($obj instanceof \Serializable) {
-                self::markSerialized($obj, $objectHashes);
-                if (method_exists($obj, '__serialize')) {
-                    $serialized = $obj->__serialize();
-                } else {
-                    trigger_error("Using the Serializable interface has been deprecated.", E_USER_DEPRECATED);
-                    $serialized = $obj->serialize();
-                }
-            } elseif ($obj instanceof SerializerInterface) {
                 self::markSerialized($obj, $objectHashes);
                 $serialized = $obj->serialize();
             } else {

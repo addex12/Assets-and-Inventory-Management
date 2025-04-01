@@ -20,8 +20,7 @@ use function substr;
  * The abstract asset allows to reset the name of all assets without publishing this to the public userland.
  *
  * This encapsulation hack is necessary to keep a consistent state of the database schema. Say we have a list of tables
- * array($tableName => Table($tableName)); if you want to rename the table, you have to make sure this does not get
- * recreated during schema migration.
+ * array($tableName => Table($tableName)); if you want to rename the table, you have to make sure
  */
 abstract class AbstractAsset
 {
@@ -124,7 +123,7 @@ abstract class AbstractAsset
             'doctrine/dbal',
             'https://github.com/doctrine/dbal/pull/4814',
             'AbstractAsset::getFullQualifiedName() is deprecated.'
-            . ' Use AbstractAsset::getNamespaceName() and ::getName() instead.',
+            . ' Use AbstractAsset::getNamespaceName() and ::getName() instead.'
         );
 
         $name = $this->getName();

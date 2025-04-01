@@ -19,14 +19,8 @@ class UnexpectedCallException extends ObjectProphecyException
     private $methodName;
     private $arguments;
 
-    /**
-     * @param string                 $message
-     * @param ObjectProphecy<object> $objectProphecy
-     * @param string                 $methodName
-     * @param array<mixed>           $arguments
-     */
     public function __construct($message, ObjectProphecy $objectProphecy,
-        $methodName, array $arguments)
+                                $methodName, array $arguments)
     {
         parent::__construct($message, $objectProphecy);
 
@@ -34,17 +28,11 @@ class UnexpectedCallException extends ObjectProphecyException
         $this->arguments = $arguments;
     }
 
-    /**
-     * @return string
-     */
     public function getMethodName()
     {
         return $this->methodName;
     }
 
-    /**
-     * @return array<mixed>
-     */
     public function getArguments()
     {
         return $this->arguments;

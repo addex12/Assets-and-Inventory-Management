@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
+<?php namespace Rollbar;
 
 class ErrorWrapper extends \Exception
 {
@@ -32,15 +30,27 @@ class ErrorWrapper extends \Exception
         return isset(self::$constName[$const]) ? self::$constName[$const] : null;
     }
 
+    public $errorLevel;
+    public $errorMessage;
+    public $errorFile;
+    public $errorLine;
+    public $backTrace;
+
     public function __construct(
-        public $errorLevel,
-        public $errorMessage,
-        public $errorFile,
-        public $errorLine,
-        public $backTrace,
+        $errorLevel,
+        $errorMessage,
+        $errorFile,
+        $errorLine,
+        $backTrace,
         $utilities
     ) {
-        parent::__construct($this->errorMessage, $this->errorLevel);
+    
+        parent::__construct($errorMessage, $errorLevel);
+        $this->errorLevel = $errorLevel;
+        $this->errorMessage = $errorMessage;
+        $this->errorFile = $errorFile;
+        $this->errorLine = $errorLine;
+        $this->backTrace = $backTrace;
         $this->utilities = $utilities;
     }
 

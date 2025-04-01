@@ -1,49 +1,48 @@
-<?php declare(strict_types=1);
+<?php namespace Rollbar\Payload;
 
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
-
-class ExceptionInfo implements SerializerInterface
+class ExceptionInfo implements \Serializable
 {
-    use UtilitiesTrait;
+    private $class;
+    private $message;
+    private $description;
+    private $utilities;
 
-    public function __construct(
-        private string $class,
-        private string $message,
-        private ?string $description = null
-    ) {
+    public function __construct($class, $message, $description = null)
+    {
+        $this->utilities = new \Rollbar\Utilities();
+        $this->setClass($class);
+        $this->setMessage($message);
+        $this->setDescription($description);
     }
 
-    public function getClass(): string
+    public function getClass()
     {
         return $this->class;
     }
 
-    public function setClass(string $class): self
+    public function setClass($class)
     {
         $this->class = $class;
         return $this;
     }
 
-    public function getMessage(): string
+    public function getMessage()
     {
         return $this->message;
     }
 
-    public function setMessage(string $message): self
+    public function setMessage($message)
     {
         $this->message = $message;
         return $this;
     }
 
-    public function getDescription(): ?string
+    public function getDescription()
     {
         return $this->description;
     }
 
-    public function setDescription(?string $description): self
+    public function setDescription($description)
     {
         $this->description = $description;
         return $this;
@@ -57,6 +56,13 @@ class ExceptionInfo implements SerializerInterface
             "description" => $this->description,
         );
         
-        return $this->utilities()->serializeForRollbarInternal($result);
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, null, $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

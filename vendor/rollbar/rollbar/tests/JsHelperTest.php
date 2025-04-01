@@ -2,29 +2,36 @@
 
 class JsHelperTest extends BaseRollbarTest
 {
-    protected $jsHelper;
-    protected $testSnippetPath;
+    protected static RollbarJsHelper $jsHelper;
+    protected static string|false $testSnippetPath = "";
     
     public function setUp(): void
     {
-        $this->jsHelper = new RollbarJsHelper(array());
-        $this->testSnippetPath = realpath(__DIR__ . "/../data/rollbar.snippet.js");
+        self::$jsHelper = new RollbarJsHelper(array());
+        self::$testSnippetPath = realpath(__DIR__ . "/../data/rollbar.snippet.js");
     }
-    
-    public function testSnippetPath()
+
+    # TODO this is needed for phpUnit 10 as all Generators needs to be static
+    public static function init(): void
+    {
+        self::$jsHelper = new RollbarJsHelper(array());
+        self::$testSnippetPath = realpath(__DIR__ . "/../data/rollbar.snippet.js");
+    }
+
+    public function testSnippetPath(): void
     {
         $this->assertEquals(
-            $this->testSnippetPath,
-            $this->jsHelper->snippetPath()
+            self::$testSnippetPath,
+            self::$jsHelper->snippetPath()
         );
     }
     
     /**
      * @dataProvider shouldAddJsProvider
      */
-    public function testShouldAddJs($setup, $expected)
+    public function testShouldAddJs($setup, $expected): void
     {
-        $mock = \Mockery::mock('Rollbar\RollbarJsHelper');
+        $mock = \Mockery::mock(\Rollbar\RollbarJsHelper::class);
              
         $status = $setup['status'];
         
@@ -40,7 +47,7 @@ class JsHelperTest extends BaseRollbarTest
         $this->assertEquals($expected, $mock->shouldAddJs($status, array()));
     }
     
-    public function shouldAddJsProvider()
+    public static function shouldAddJsProvider(): array
     {
         return array(
             array(
@@ -81,15 +88,15 @@ class JsHelperTest extends BaseRollbarTest
     /**
      * @dataProvider isHtmlProvider
      */
-    public function testIsHtml($headers, $expected)
+    public function testIsHtml($headers, $expected): void
     {
         $this->assertEquals(
             $expected,
-            $this->jsHelper->isHtml($headers)
+            self::$jsHelper->isHtml($headers)
         );
     }
     
-    public function isHtmlProvider()
+    public static function isHtmlProvider(): array
     {
         return array(
             array(
@@ -110,15 +117,15 @@ class JsHelperTest extends BaseRollbarTest
     /**
      * @dataProvider hasAttachmentProvider
      */
-    public function testHasAttachment($headers, $expected)
+    public function testHasAttachment($headers, $expected): void
     {
         $this->assertEquals(
             $expected,
-            $this->jsHelper->hasAttachment($headers)
+            self::$jsHelper->hasAttachment($headers)
         );
     }
     
-    public function hasAttachmentProvider()
+    public static function hasAttachmentProvider(): array
     {
         return array(
             array(
@@ -135,25 +142,25 @@ class JsHelperTest extends BaseRollbarTest
         );
     }
     
-    public function testJsSnippet()
+    public function testJsSnippet(): void
     {
-        $expected = file_get_contents($this->testSnippetPath);
+        $expected = file_get_contents(self::$testSnippetPath);
         
-        $this->assertEquals($expected, $this->jsHelper->jsSnippet());
+        $this->assertEquals($expected, self::$jsHelper->jsSnippet());
     }
     
     /**
      * @dataProvider shouldAppendNonceProvider
      */
-    public function testShouldAppendNonce($headers, $expected)
+    public function testShouldAppendNonce($headers, $expected): void
     {
         $this->assertEquals(
             $expected,
-            $this->jsHelper->shouldAppendNonce($headers)
+            self::$jsHelper->shouldAppendNonce($headers)
         );
     }
     
-    public function shouldAppendNonceProvider()
+    public static function shouldAppendNonceProvider(): array
     {
         return array(
             array(
@@ -180,11 +187,11 @@ class JsHelperTest extends BaseRollbarTest
     /**
      * @dataProvider scriptTagProvider
      */
-    public function testScriptTag($content, $headers, $nonce, $expected)
+    public function testScriptTag($content, $headers, $nonce, $expected): void
     {
         if ($expected === 'Exception') {
             try {
-                $result = $this->jsHelper->scriptTag($content, $headers, $nonce);
+                $result = self::$jsHelper->scriptTag($content, $headers, $nonce);
                 
                 $this->fail();
             } catch (\Exception $e) {
@@ -192,13 +199,13 @@ class JsHelperTest extends BaseRollbarTest
                 return;
             }
         } else {
-            $result = $this->jsHelper->scriptTag($content, $headers, $nonce);
+            $result = self::$jsHelper->scriptTag($content, $headers, $nonce);
             
             $this->assertEquals($expected, $result);
         }
     }
     
-    public function scriptTagProvider()
+    public static function scriptTagProvider(): array
     {
         return array(
             'nonce script' => array(
@@ -226,13 +233,11 @@ class JsHelperTest extends BaseRollbarTest
         );
     }
     
-    public function testConfigJsTag()
+    /**
+     * @dataProvider configJsTagProvider
+     */
+    public function testConfigJsTag($config, $expectedJson): void
     {
-        $config = array(
-            'config1' => 'value 1'
-        );
-        
-        $expectedJson = json_encode($config);
         $expected = "var _rollbarConfig = $expectedJson;";
         
         $helper = new RollbarJsHelper($config);
@@ -241,10 +246,22 @@ class JsHelperTest extends BaseRollbarTest
         $this->assertEquals($expected, $result);
     }
     
+    public static function configJsTagProvider(): array
+    {
+        return array(
+            array(array(), '{}'),
+            array(array('config1' => 'value 1'), '{"config1":"value 1"}'),
+            array(
+                array('hostBlackList' => array('example.com', 'badhost.com')),
+                '{"hostBlackList":["example.com","badhost.com"]}'
+            ),
+        );
+    }
+
     /**
      * @dataProvider addJsProvider
      */
-    public function testBuildJs($config, $headers, $nonce, $expected)
+    public static function testBuildJs($config, $headers, $nonce, $expected): void
     {
         $result = RollbarJsHelper::buildJs(
             $config,
@@ -253,13 +270,13 @@ class JsHelperTest extends BaseRollbarTest
             "var customJs = true;"
         );
         
-        $this->assertEquals($expected, $result);
+        self::assertEquals($expected, $result);
     }
     
     /**
      * @dataProvider addJsProvider
      */
-    public function testAddJs($config, $headers, $nonce, $expected)
+    public function testAddJs($config, $headers, $nonce, $expected): void
     {
         $helper = new RollbarJsHelper($config);
         
@@ -271,11 +288,13 @@ class JsHelperTest extends BaseRollbarTest
         
         $this->assertEquals($expected, $result);
     }
-    
-    public function addJsProvider()
+
+    # TODO this is needed for phpUnit 10 as all Generators needs to be static
+    public static function addJsProvider(): array
     {
-        $this->setUp();
-        $expectedJs = file_get_contents($this->testSnippetPath);
+        self::init();
+        $expectedJs = file_get_contents(self::$testSnippetPath);
+
         return array(
             array(
                 array(), // 'config'

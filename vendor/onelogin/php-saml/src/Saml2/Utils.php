@@ -2,13 +2,15 @@
 /**
  * This file is part of php-saml.
  *
+ * (c) OneLogin Inc
+ *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  *
  * @package OneLogin
- * @author  Sixto Martin <sixto.martin.garcia@gmail.com>
- * @license MIT https://github.com/SAML-Toolkits/php-saml/blob/master/LICENSE
- * @link    https://github.com/SAML-Toolkits/php-saml
+ * @author  OneLogin Inc <saml-info@onelogin.com>
+ * @license MIT https://github.com/onelogin/php-saml/blob/master/LICENSE
+ * @link    https://github.com/onelogin/php-saml
  */
 
 namespace OneLogin\Saml2;
@@ -25,7 +27,7 @@ use DOMXPath;
 use Exception;
 
 /**
- * Utils of SAML PHP Toolkit
+ * Utils of OneLogin PHP Toolkit
  *
  * Defines several often used methods
  */
@@ -212,27 +214,24 @@ class Utils
     /**
      * Returns a x509 cert (adding header & footer if required).
      *
-     * @param string $x509cert  A x509 unformated cert
-     * @param bool   $heads     True if we want to include head and footer
+     * @param string $cert  A x509 unformated cert
+     * @param bool   $heads True if we want to include head and footer
      *
      * @return string $x509 Formatted cert
      */
-    public static function formatCert($x509cert, $heads = true)
+    public static function formatCert($cert, $heads = true)
     {
-        if (is_null($x509cert)) {
-          return;
+        $x509cert = str_replace(array("\x0D", "\r", "\n"), "", $cert);
+        if (!empty($x509cert)) {
+            $x509cert = str_replace('-----BEGIN CERTIFICATE-----', "", $x509cert);
+            $x509cert = str_replace('-----END CERTIFICATE-----', "", $x509cert);
+            $x509cert = str_replace(' ', '', $x509cert);
+
+            if ($heads) {
+                $x509cert = "-----BEGIN CERTIFICATE-----\n".chunk_split($x509cert, 64, "\n")."-----END CERTIFICATE-----\n";
+            }
+
         }
-
-        if (strpos($x509cert, '-----BEGIN CERTIFICATE-----') !== false) {
-            $x509cert = static::getStringBetween($x509cert, '-----BEGIN CERTIFICATE-----', '-----END CERTIFICATE-----');
-        }
-
-        $x509cert = str_replace(["\x0d", "\r", "\n", " "], '', $x509cert);
-
-        if ($heads && $x509cert !== '') {
-            $x509cert = "-----BEGIN CERTIFICATE-----\n".chunk_split($x509cert, 64, "\n")."-----END CERTIFICATE-----\n";
-        }
-
         return $x509cert;
     }
 
@@ -246,10 +245,6 @@ class Utils
      */
     public static function formatPrivateKey($key, $heads = true)
     {
-        if (is_null($key)) {
-          return;
-        }
-
         $key = str_replace(array("\x0D", "\r", "\n"), "", $key);
         if (!empty($key)) {
             if (strpos($key, '-----BEGIN PRIVATE KEY-----') !== false) {
@@ -309,7 +304,6 @@ class Utils
      * @param bool   $stay       True if we want to stay (returns the url string) False to redirect
      *
      * @return string|null $url
-     * @phpstan-return ($stay is true ? string : never)
      *
      * @throws Error
      */
@@ -325,12 +319,7 @@ class Utils
          * Verify that the URL matches the regex for the protocol.
          * By default this will check for http and https
          */
-        if (isset(self::$_protocolRegex)) {
-            $protocol = self::$_protocolRegex;
-        } else {
-            $protocol = "";
-        }
-        $wrongProtocol = !preg_match($protocol, $url);
+        $wrongProtocol = !preg_match(self::$_protocolRegex, $url);
         $url = filter_var($url, FILTER_VALIDATE_URL);
         if ($wrongProtocol || empty($url)) {
             throw new Error(
@@ -511,7 +500,7 @@ class Utils
         if (self::$_host) {
             $currentHost = self::$_host;
         } elseif (self::getProxyVars() && array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER)) {
-            $currentHost = explode(',', $_SERVER['HTTP_X_FORWARDED_HOST'])[0];
+            $currentHost = $_SERVER['HTTP_X_FORWARDED_HOST'];
         } elseif (array_key_exists('HTTP_HOST', $_SERVER)) {
             $currentHost = $_SERVER['HTTP_HOST'];
         } elseif (array_key_exists('SERVER_NAME', $_SERVER)) {
@@ -784,10 +773,6 @@ class Utils
      */
     public static function parseSAML2Time($time)
     {
-        if (empty($time)) {
-          return null;
-        }
-
         $matches = array();
 
         /* We use a very strict regex to parse the timestamp. */
@@ -916,7 +901,6 @@ class Utils
      * @param string|int|null $validUntil    The valid until date, as a string or as a timestamp
      *
      * @return int|null $expireTime  The expiration time.
-     * @phpstan-return ($cacheDuration is true ? string : never)
      *
      * @throws Exception
      */
@@ -1026,10 +1010,7 @@ class Utils
                 if (strncmp($curData, '-----END CERTIFICATE', 20) == 0) {
                     break;
                 }
-                if (isset($curData)) {
-                    $curData = trim($curData);
-                }
-                $data .= $curData;
+                $data .= trim($curData);
             }
         }
 
@@ -1062,9 +1043,6 @@ class Utils
      */
     public static function formatFingerPrint($fingerprint)
     {
-        if (is_null($fingerprint)) {
-            return;
-        }
         $formatedFingerprint = str_replace(':', '', $fingerprint);
         $formatedFingerprint = strtolower($formatedFingerprint);
         return $formatedFingerprint;
@@ -1582,7 +1560,7 @@ class Utils
                     $objKey = Utils::castKey($objKey, $signAlg, 'public');
                 } catch (Exception $e) {
                     $ex = new ValidationError(
-                        "Invalid signAlg in the received ".$strMessageType,
+                        "Invalid signAlg in the recieved ".$strMessageType,
                         ValidationError::INVALID_SIGNATURE
                     );
                     if (count($multiCerts) == 1) {

@@ -30,7 +30,7 @@ class RollbarTest extends BaseRollbarTest
         Rollbar::init(self::$simpleConfig);
         
         $this->assertInstanceOf('Rollbar\RollbarLogger', Rollbar::logger());
-        $this->assertEquals(new Config(self::$simpleConfig), Rollbar::logger()->getConfig());
+        $this->assertAttributeEquals(new Config(self::$simpleConfig), 'config', Rollbar::logger());
     }
     
     public function testInitWithLogger()
@@ -250,24 +250,5 @@ class RollbarTest extends BaseRollbarTest
         
         Rollbar::configure(array('enabled' => false));
         $this->assertTrue(Rollbar::disabled());
-    }
-
-    public function testLogUncaughtUnsetLogger()
-    {
-        $sut = new Rollbar;
-        $result = $sut->logUncaught('level', new \Exception);
-        $expected = new Response(0, "Rollbar Not Initialized");
-        $this->assertEquals($expected, $result);
-    }
-
-    public function testLogUncaught()
-    {
-        $sut = new Rollbar;
-        Rollbar::init(self::$simpleConfig);
-        $logger = Rollbar::logger();
-        $toLog = new \Exception;
-        $result = Rollbar::logUncaught(Level::ERROR, $toLog);
-        $this->assertEquals(200, $result->getStatus());
-        $this->assertObjectNotHasAttribute('uncaught', $toLog);
     }
 }

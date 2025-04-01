@@ -24,17 +24,10 @@ final class CastToString implements TypeCasting
     private readonly bool $isNullable;
     private readonly Type $type;
     private ?string $default = null;
-    private readonly TypeCastingInfo $variableName;
 
     public function __construct(ReflectionProperty|ReflectionParameter $reflectionProperty)
     {
         [$this->type, $this->isNullable] = $this->init($reflectionProperty);
-        $this->variableName = TypeCastingInfo::fromAccessor($reflectionProperty);
-    }
-
-    public function info(): TypeCastingInfo
-    {
-        return $this->variableName;
     }
 
     public function setOptions(
@@ -52,7 +45,7 @@ final class CastToString implements TypeCasting
         $returnedValue = match (true) {
             is_string($value) => $value,
             $this->isNullable => $this->default,
-            default => throw TypeCastingFailed::dueToNotNullableType($this->type->value, info: $this->variableName),
+            default => throw TypeCastingFailed::dueToNotNullableType($this->type->value),
         };
 
         return match (true) {
@@ -60,7 +53,7 @@ final class CastToString implements TypeCasting
                 null === $value => 'null',
                 '' === $value => 'empty string',
                 default => $value,
-            }, $this->type->value, info: $this->variableName),
+            }, $this->type->value),
             default => $returnedValue,
         };
     }

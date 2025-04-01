@@ -11,7 +11,11 @@ use function sqlsrv_errors;
 
 use const SQLSRV_ERR_ERRORS;
 
-/** @internal */
+/**
+ * @internal
+ *
+ * @psalm-immutable
+ */
 final class Error extends AbstractException
 {
     public static function new(): self
@@ -21,8 +25,11 @@ final class Error extends AbstractException
         $code     = 0;
 
         foreach ((array) sqlsrv_errors(SQLSRV_ERR_ERRORS) as $error) {
-            $message   .= 'SQLSTATE [' . $error['SQLSTATE'] . ', ' . $error['code'] . ']: ' . $error['message'] . "\n";
-            $sqlState ??= $error['SQLSTATE'];
+            $message .= 'SQLSTATE [' . $error['SQLSTATE'] . ', ' . $error['code'] . ']: ' . $error['message'] . "\n";
+
+            if ($sqlState === null) {
+                $sqlState = $error['SQLSTATE'];
+            }
 
             if ($code !== 0) {
                 continue;

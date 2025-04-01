@@ -64,7 +64,7 @@ class FrameTest extends BaseRollbarTest
 
     public function testEncode()
     {
-        $context = m::mock("Rollbar\Payload\Context, Rollbar\SerializerInterface")
+        $context = m::mock("Rollbar\Payload\Context, \Serializable")
             ->shouldReceive("serialize")
             ->andReturn("{CONTEXT}")
             ->mock();

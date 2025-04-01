@@ -1,11 +1,8 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Payload;
+<?php namespace Rollbar\Payload;
 
 use Rollbar\LevelFactory;
-use Rollbar\SerializerInterface;
 
-class Level implements SerializerInterface
+class Level implements \Serializable
 {
     /**
      * Those are PSR-3 compatible loggin levels. They are mapped to Rollbar
@@ -48,10 +45,16 @@ class Level implements SerializerInterface
         return $level;
     }
 
-    public function __construct(
-        private string $level,
-        private int $val
-    ) {
+    /**
+     * @var string
+     */
+    private $level;
+    private $val;
+
+    public function __construct($level, $val)
+    {
+        $this->level = $level;
+        $this->val = $val;
     }
 
     public function __toString()
@@ -59,7 +62,7 @@ class Level implements SerializerInterface
         return $this->level;
     }
 
-    public function toInt(): int
+    public function toInt()
     {
         return $this->val;
     }
@@ -67,5 +70,10 @@ class Level implements SerializerInterface
     public function serialize()
     {
         return $this->level;
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

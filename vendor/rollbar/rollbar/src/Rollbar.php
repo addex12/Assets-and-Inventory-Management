@@ -1,12 +1,9 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
+<?php namespace Rollbar;
 
 use Rollbar\Payload\Level;
 use Rollbar\Handlers\FatalHandler;
 use Rollbar\Handlers\ErrorHandler;
 use Rollbar\Handlers\ExceptionHandler;
-use Throwable;
 
 class Rollbar
 {
@@ -90,26 +87,12 @@ class Rollbar
         return self::$logger->scope($config);
     }
 
-    public static function log($level, $toLog, $extra = array())
+    public static function log($level, $toLog, $extra = array(), $isUncaught = false)
     {
         if (is_null(self::$logger)) {
             return self::getNotInitializedResponse();
         }
-        return self::$logger->log($level, $toLog, (array)$extra);
-    }
-
-    /**
-     * @since 3.0.0
-     */
-    public static function logUncaught($level, Throwable $toLog, $extra = array())
-    {
-        if (is_null(self::$logger)) {
-            return self::getNotInitializedResponse();
-        }
-        $toLog->isUncaught = true;
-        $result = self::$logger->log($level, $toLog, (array)$extra);
-        unset($toLog->isUncaught);
-        return $result;
+        return self::$logger->log($level, $toLog, (array)$extra, $isUncaught);
     }
     
     public static function debug($toLog, $extra = array())
@@ -246,7 +229,10 @@ class Rollbar
      */
     public static function report_exception($exc, $extra_data = null, $payload_data = null)
     {
-        $extra_data = array_merge($extra_data ?? [], $payload_data ?? []);
+        
+        if ($payload_data) {
+            $extra_data = array_merge($extra_data, $payload_data);
+        }
         return self::log(Level::ERROR, $exc, $extra_data)->getUuid();
     }
 
@@ -264,8 +250,11 @@ class Rollbar
      */
     public static function report_message($message, $level = null, $extra_data = null, $payload_data = null)
     {
-        $level = $level ?? Level::ERROR;
-        $extra_data = array_merge($extra_data ?? [], $payload_data ?? []);
+        
+        $level = $level ? $level : Level::ERROR;
+        if ($payload_data) {
+            $extra_data = array_merge($extra_data, $payload_data);
+        }
         return self::log($level, $message, $extra_data)->getUuid();
     }
 

@@ -1,7 +1,6 @@
 <?php namespace Rollbar;
 
 use \Mockery as m;
-use \Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Rollbar\FakeDataBuilder;
 use Rollbar\Payload\Body;
 use Rollbar\Payload\Data;
@@ -11,8 +10,6 @@ use Rollbar\Payload\Payload;
 use Rollbar\RollbarLogger;
 use Rollbar\Defaults;
 
-use Rollbar\TestHelpers\CustomSerializable;
-use Rollbar\TestHelpers\DeprecatedSerializable;
 use Rollbar\TestHelpers\Exceptions\SilentExceptionSampleRate;
 use Rollbar\TestHelpers\Exceptions\FiftyFiftyExceptionSampleRate;
 use Rollbar\TestHelpers\Exceptions\FiftyFityChildExceptionSampleRate;
@@ -21,8 +18,6 @@ use Rollbar\TestHelpers\Exceptions\VerboseExceptionSampleRate;
 
 class ConfigTest extends BaseRollbarTest
 {
-    use MockeryPHPUnitIntegration;
-
     private $error;
 
     public function setUp(): void
@@ -115,7 +110,7 @@ class ConfigTest extends BaseRollbarTest
                         );
         $senderMock = $this->getMockBuilder('\Rollbar\Senders\SenderInterface')
                         ->getMock();
-        $senderMock->method('send')->willReturn(null);
+        $senderMock->method('send')->willReturn(true);
 
         $payload = new \Rollbar\Payload\EncodedPayload(array('data'=>array()));
         $payload->encode();
@@ -295,7 +290,7 @@ class ConfigTest extends BaseRollbarTest
         $transformer = m::mock("Rollbar\TransformerInterface");
         $transformer->shouldReceive('transform')
             ->once()
-            ->with($p, "error", "message", [ "extra_data" ])
+            ->with($p, "error", "message", "extra_data")
             ->andReturn($pPrime)
             ->mock();
         $config = new Config(array(
@@ -303,7 +298,7 @@ class ConfigTest extends BaseRollbarTest
             "environment" => $this->env,
             "transformer" => $transformer
         ));
-        $this->assertEquals($pPrime, $config->transform($p, "error", "message", [ "extra_data" ]));
+        $this->assertEquals($pPrime, $config->transform($p, "error", "message", "extra_data"));
     }
 
     public function testMinimumLevel()
@@ -332,12 +327,12 @@ class ConfigTest extends BaseRollbarTest
     
     public function assertPayloadIgnored($config, $payload)
     {
-        $this->assertTrue($config->checkIgnored($payload, 'access-token', $this->error, false));
+        $this->assertTrue($config->checkIgnored($payload, null, $this->error, false));
     }
     
     public function assertPayloadNotIgnored($config, $payload)
     {
-        $this->assertFalse($config->checkIgnored($payload, 'access-token', $this->error, false));
+        $this->assertFalse($config->checkIgnored($payload, null, $this->error, false));
     }
     
     private function prepareMockPayload($level)
@@ -349,47 +344,9 @@ class ConfigTest extends BaseRollbarTest
         return new Payload($data, $this->getTestAccessToken());
     }
 
-    /**
-     * Test the shouldSuppress method, which is driven by the configuration
-     * given and the value of the PHP engine's error_reporting() setting.
-     *
-     *            - error reporting value
-     *            |  - configuration key
-     *            |  |                   - configuration value
-     *            |  |                   |      - shouldSuppress() result
-     *            v  v                   v      v
-     * @testWith [0, "reportSuppressed", false, true]
-     *           [0, "reportSuppressed", true,  false]
-     *           [1, "reportSuppressed", false, false]
-     *           [0, "report_suppressed", false, true]
-     *           [0, "report_suppressed", true,  false]
-     *           [1, "report_suppressed", false, false]
-     */
-    public function testReportSuppressed($errorReporting, $configKey, $configValue, $shouldSuppressExpect)
+    public function testReportSuppressed()
     {
-        $oldErrorReporting = error_reporting($errorReporting);
-        try {
-            $config = new Config(array(
-                $configKey => $configValue
-            ));
-            $this->assertSame(
-                $shouldSuppressExpect,
-                $config->shouldSuppress(),
-                'shouldSuppress() did not return the expected value for the error_reporting and configuration given'
-            );
-        } finally {
-            error_reporting($oldErrorReporting);
-        }
-    }
-
-    public function testReportSuppressedActuallySuppressed()
-    {
-        $config = new Config(array(
-            'report_suppressed' => false,
-            "access_token" => $this->getTestAccessToken()
-        ));
-        $this->assertFalse($config->shouldSuppress());
-        $this->assertTrue(@$config->shouldSuppress());
+        $this->assertTrue(true, "Don't know how to unit test this. PRs welcome");
     }
 
     public function testFilter()
@@ -448,172 +405,29 @@ class ConfigTest extends BaseRollbarTest
 
     public function testCustom()
     {
-        $expectedCustom = array(
-            "foo" => "bar",
-            "fuzz" => "buzz"
-        );
         $config = new Config(array(
             "access_token" => $this->getTestAccessToken(),
             "environment" => $this->env,
-            "custom" => $expectedCustom,
+            "custom" => array(
+                "foo" => "bar",
+                "fuzz" => "buzz"
+            )
         ));
-
-        $result = $config->getDataBuilder()->makeData(
+        
+        $dataBuilder = $config->getDataBuilder();
+        
+        $result = $dataBuilder->makeData(
             Level::INFO,
             "Test message with custom data added dynamically.",
-            array(),
+            array()
         );
         
-        $actualCustom = $result->getCustom();
+        $custom = $result->getCustom();
         
-        $this->assertSame($expectedCustom, $actualCustom);
+        $this->assertEquals("bar", $custom["foo"]);
+        $this->assertEquals("buzz", $custom["fuzz"]);
     }
-
-    public function testCustomPrimitive()
-    {
-        $config = new Config(array(
-            "access_token" => $this->getTestAccessToken(),
-            "environment" => $this->env,
-            "custom" => true,
-        ));
-
-        $result = $config->getDataBuilder()->makeData(
-            Level::INFO,
-            "Test message with custom data added dynamically.",
-            array(),
-        );
-
-        $custom = $result->getCustom();
-
-        $this->assertSame(array('message' => true), $custom);
-    }
-
-    public function testCustomPrimitiveFalsy()
-    {
-        $config = new Config(array(
-            "access_token" => $this->getTestAccessToken(),
-            "environment" => $this->env,
-            "custom" => 0.0,
-        ));
-
-        $result = $config->getDataBuilder()->makeData(
-            Level::INFO,
-            "Test message with custom data added dynamically.",
-            array(),
-        );
-
-        $custom = $result->getCustom();
-
-        $this->assertSame(array(), $custom);
-    }
-
-    public function testCustomObject()
-    {
-        $expectedCustom = array(
-            "foo" => "bar",
-            "fuzz" => "buzz"
-        );
-        $config = new Config(array(
-            "access_token" => $this->getTestAccessToken(),
-            "environment" => $this->env,
-            "custom" => (object) $expectedCustom,
-        ));
-
-        // New error handler to make sure we get the deprecated notice
-        set_error_handler(function (
-            int $errno,
-            string $errstr,
-        ) : bool {
-            $this->assertStringContainsString("deprecated", $errstr);
-            return true;
-        }, E_USER_DEPRECATED);
-
-        $result = $config->getDataBuilder()->makeData(
-            Level::INFO,
-            "Test message with custom data added dynamically.",
-            array(),
-        );
-
-        // Clear the handler, so it does not mess with other tests.
-        restore_error_handler();
-
-        $actualCustom = $result->getCustom();
-
-        $this->assertSame($expectedCustom, $actualCustom);
-    }
-
-    public function testDeprecatedSerializable()
-    {
-        $expectedCustom = array(
-            "foo" => "bar",
-            "fuzz" => "buzz"
-        );
-        $config = new Config(array(
-            "access_token" => $this->getTestAccessToken(),
-            "environment" => $this->env,
-            "custom" => new DeprecatedSerializable($expectedCustom),
-        ));
-
-        // New error handler to make sure we get the deprecated notice
-        set_error_handler(function (
-            int $errno,
-            string $errstr,
-        ) : bool {
-            $this->assertStringContainsString("Serializable", $errstr);
-            $this->assertStringContainsString("deprecated", $errstr);
-            return true;
-        }, E_USER_DEPRECATED);
-
-        $result = $config->getDataBuilder()->makeData(
-            Level::INFO,
-            "Test message with custom data added dynamically.",
-            array(),
-        );
-
-        // Clear the handler, so it does not mess with other tests.
-        restore_error_handler();
-
-        $actualCustom = $result->getCustom();
-
-        $this->assertSame($expectedCustom, $actualCustom);
-    }
-
-    public function testCustomSerializable()
-    {
-        $expectedCustom = array(
-            "foo" => "bar",
-            "fuzz" => "buzz"
-        );
-        $config = new Config(array(
-            "access_token" => $this->getTestAccessToken(),
-            "environment" => $this->env,
-            "custom" => new CustomSerializable($expectedCustom),
-        ));
-
-        // Make sure the deprecation notice is not sent if the object implements __serializable as it should
-        set_error_handler(function (
-            int $errno,
-            string $errstr,
-        ) : bool {
-            $this->assertStringNotContainsString("Serializable", $errstr);
-            $this->assertStringNotContainsString("deprecated", $errstr);
-            return true;
-        }, E_USER_DEPRECATED);
-
-        $result = $config->getDataBuilder()->makeData(
-            Level::INFO,
-            "Test message with custom data added dynamically.",
-            array(),
-        );
-
-        // Clear the handler, so it does not mess with other tests.
-        restore_error_handler();
-
-        $actualCustom = $result->getCustom();
-
-        $this->assertSame($expectedCustom, $actualCustom);
-    }
-
+    
     public function testMaxItems()
     {
         $config = new Config(array(

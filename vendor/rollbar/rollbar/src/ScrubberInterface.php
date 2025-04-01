@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
+<?php namespace Rollbar;
 
 interface ScrubberInterface
 {

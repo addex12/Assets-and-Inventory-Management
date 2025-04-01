@@ -4,7 +4,7 @@ class EncodedPayload extends \Rollbar\Payload\EncodedPayload
 {
     protected static $encodingCount = 0;
     
-    public function encode(?array $data = null): void
+    public function encode($data = null)
     {
         parent::encode($data);
         self::$encodingCount++;

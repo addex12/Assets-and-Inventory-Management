@@ -49,7 +49,7 @@ class PayloadTest extends BaseRollbarTest
     public function testEncode()
     {
         $accessToken = $this->getTestAccessToken();
-        $data = m::mock('Rollbar\Payload\Data, Rollbar\SerializerInterface')
+        $data = m::mock('Rollbar\Payload\Data, \Serializable')
             ->shouldReceive('serialize')
             ->andReturn(new \ArrayObject())
             ->mock();

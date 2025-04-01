@@ -7,13 +7,11 @@
  *
  * @author    Greg Sherwood <gsherwood@squiz.net>
  * @copyright 2006-2015 Squiz Pty Ltd (ABN 77 084 670 600)
- * @license   https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
+ * @license   https://github.com/squizlabs/PHP_CodeSniffer/blob/master/licence.txt BSD Licence
  */
 
 namespace PHP_CodeSniffer;
 
-use Exception;
-use InvalidArgumentException;
 use PHP_CodeSniffer\Exceptions\DeepExitException;
 use PHP_CodeSniffer\Exceptions\RuntimeException;
 use PHP_CodeSniffer\Files\DummyFile;
@@ -22,8 +20,6 @@ use PHP_CodeSniffer\Files\FileList;
 use PHP_CodeSniffer\Util\Cache;
 use PHP_CodeSniffer\Util\Common;
 use PHP_CodeSniffer\Util\Standards;
-use PHP_CodeSniffer\Util\Timing;
-use PHP_CodeSniffer\Util\Tokens;
 
 class Runner
 {
@@ -53,14 +49,12 @@ class Runner
     /**
      * Run the PHPCS script.
      *
-     * @return int
+     * @return array
      */
     public function runPHPCS()
     {
-        $this->registerOutOfMemoryShutdownMessage('phpcs');
-
         try {
-            Timing::startTiming();
+            Util\Timing::startTiming();
             Runner::checkRequirements();
 
             if (defined('PHP_CODESNIFFER_CBF') === false) {
@@ -131,7 +125,7 @@ class Runner
                 && ($toScreen === false
                 || (($this->reporter->totalErrors + $this->reporter->totalWarnings) === 0 && $this->config->showProgress === true))
             ) {
-                Timing::printRunTime();
+                Util\Timing::printRunTime();
             }
         } catch (DeepExitException $e) {
             echo $e->getMessage();
@@ -155,18 +149,16 @@ class Runner
     /**
      * Run the PHPCBF script.
      *
-     * @return int
+     * @return array
      */
     public function runPHPCBF()
     {
-        $this->registerOutOfMemoryShutdownMessage('phpcbf');
-
         if (defined('PHP_CODESNIFFER_CBF') === false) {
             define('PHP_CODESNIFFER_CBF', true);
         }
 
         try {
-            Timing::startTiming();
+            Util\Timing::startTiming();
             Runner::checkRequirements();
 
             // Creating the Config object populates it with all required settings
@@ -198,15 +190,7 @@ class Runner
             $this->config->showSources  = false;
             $this->config->recordErrors = false;
             $this->config->reportFile   = null;
-
-            // Only use the "Cbf" report, but allow for the Performance report as well.
-            $originalReports = array_change_key_case($this->config->reports, CASE_LOWER);
-            $newReports      = ['cbf' => null];
-            if (array_key_exists('performance', $originalReports) === true) {
-                $newReports['performance'] = $originalReports['performance'];
-            }
-
-            $this->config->reports = $newReports;
+            $this->config->reports      = ['cbf' => null];
 
             // If a standard tries to set command line arguments itself, some
             // may be blocked because PHPCBF is running, so stop the script
@@ -217,7 +201,7 @@ class Runner
             $this->reporter->printReports();
 
             echo PHP_EOL;
-            Timing::printRunTime();
+            Util\Timing::printRunTime();
         } catch (DeepExitException $e) {
             echo $e->getMessage();
             return $e->getCode();
@@ -314,12 +298,12 @@ class Runner
 
         // Check that the standards are valid.
         foreach ($this->config->standards as $standard) {
-            if (Standards::isInstalledStandard($standard) === false) {
+            if (Util\Standards::isInstalledStandard($standard) === false) {
                 // They didn't select a valid coding standard, so help them
                 // out by letting them know which standards are installed.
                 $error = 'ERROR: the "'.$standard.'" coding standard is not installed. ';
                 ob_start();
-                Standards::printInstalledStandards();
+                Util\Standards::printInstalledStandards();
                 $error .= ob_get_contents();
                 ob_end_clean();
                 throw new DeepExitException($error, 3);
@@ -334,11 +318,11 @@ class Runner
 
         // Create this class so it is autoloaded and sets up a bunch
         // of PHP_CodeSniffer-specific token type constants.
-        new Tokens();
+        $tokens = new Util\Tokens();
 
         // Allow autoloading of custom files inside installed standards.
         $installedStandards = Standards::getInstalledStandardDetails();
-        foreach ($installedStandards as $details) {
+        foreach ($installedStandards as $name => $details) {
             Autoload::addSearchPath($details['path'], $details['namespace']);
         }
 
@@ -346,12 +330,8 @@ class Runner
         // should be checked and/or fixed.
         try {
             $this->ruleset = new Ruleset($this->config);
-
-            if ($this->ruleset->hasSniffDeprecations() === true) {
-                $this->ruleset->showSniffDeprecations();
-            }
         } catch (RuntimeException $e) {
-            $error  = rtrim($e->getMessage(), "\r\n").PHP_EOL.PHP_EOL;
+            $error  = 'ERROR: '.$e->getMessage().PHP_EOL.PHP_EOL;
             $error .= $this->config->printShortUsage(true);
             throw new DeepExitException($error, 3);
         }
@@ -611,7 +591,7 @@ class Runner
      * @param string $file    The path of the file that raised the error.
      * @param int    $line    The line number the error was raised at.
      *
-     * @return bool
+     * @return void
      * @throws \PHP_CodeSniffer\Exceptions\RuntimeException
      */
     public function handleErrors($code, $message, $file, $line)
@@ -666,52 +646,12 @@ class Runner
                     echo " ($errors errors, $warnings warnings)".PHP_EOL;
                 }
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $error = 'An error occurred during processing; checking has been aborted. The error message was: '.$e->getMessage();
-
-            // Determine which sniff caused the error.
-            $sniffStack = null;
-            $nextStack  = null;
-            foreach ($e->getTrace() as $step) {
-                if (isset($step['file']) === false) {
-                    continue;
-                }
-
-                if (empty($sniffStack) === false) {
-                    $nextStack = $step;
-                    break;
-                }
-
-                if (substr($step['file'], -9) === 'Sniff.php') {
-                    $sniffStack = $step;
-                    continue;
-                }
-            }
-
-            if (empty($sniffStack) === false) {
-                $sniffCode = '';
-                try {
-                    if (empty($nextStack) === false
-                        && isset($nextStack['class']) === true
-                        && substr($nextStack['class'], -5) === 'Sniff'
-                    ) {
-                        $sniffCode = 'the '.Common::getSniffCode($nextStack['class']).' sniff';
-                    }
-                } catch (InvalidArgumentException $e) {
-                    // Sniff code could not be determined. This may be an abstract sniff class.
-                }
-
-                if ($sniffCode === '') {
-                    $sniffCode = substr(strrchr(str_replace('\\', '/', $sniffStack['file']), '/'), 1);
-                }
-
-                $error .= sprintf(PHP_EOL.'The error originated in %s on line %s.', $sniffCode, $sniffStack['line']);
-            }
-
             $file->addErrorOnLine($error, 1, 'Internal.Exception');
         }//end try
 
-        $this->reporter->cacheFileReport($file);
+        $this->reporter->cacheFileReport($file, $this->config);
 
         if ($this->config->interactive === true) {
             /*
@@ -746,7 +686,7 @@ class Runner
                     $file->ruleset->populateTokenListeners();
                     $file->reloadContent();
                     $file->process();
-                    $this->reporter->cacheFileReport($file);
+                    $this->reporter->cacheFileReport($file, $this->config);
                     break;
                 }
             }//end while
@@ -779,11 +719,6 @@ class Runner
             $pid = pcntl_waitpid(0, $status);
             if ($pid <= 0) {
                 continue;
-            }
-
-            $childProcessStatus = pcntl_wexitstatus($status);
-            if ($childProcessStatus !== 0) {
-                $success = false;
             }
 
             $out = $childProcs[$pid];
@@ -949,44 +884,6 @@ class Runner
         echo str_repeat(' ', $padding)." $numProcessed / $numFiles ($percent%)".PHP_EOL;
 
     }//end printProgress()
-
-
-    /**
-     * Registers a PHP shutdown function to provide a more informative out of memory error.
-     *
-     * @param string $command The command which was used to initiate the PHPCS run.
-     *
-     * @return void
-     */
-    private function registerOutOfMemoryShutdownMessage($command)
-    {
-        // Allocate all needed memory beforehand as much as possible.
-        $errorMsg    = PHP_EOL.'The PHP_CodeSniffer "%1$s" command ran out of memory.'.PHP_EOL;
-        $errorMsg   .= 'Either raise the "memory_limit" of PHP in the php.ini file or raise the memory limit at runtime'.PHP_EOL;
-        $errorMsg   .= 'using `%1$s -d memory_limit=512M` (replace 512M with the desired memory limit).'.PHP_EOL;
-        $errorMsg    = sprintf($errorMsg, $command);
-        $memoryError = 'Allowed memory size of';
-        $errorArray  = [
-            'type'    => 42,
-            'message' => 'Some random dummy string to take up memory and take up some more memory and some more',
-            'file'    => 'Another random string, which would be a filename this time. Should be relatively long to allow for deeply nested files',
-            'line'    => 31427,
-        ];
-
-        register_shutdown_function(
-            static function () use (
-                $errorMsg,
-                $memoryError,
-                $errorArray
-            ) {
-                $errorArray = error_get_last();
-                if (is_array($errorArray) === true && strpos($errorArray['message'], $memoryError) !== false) {
-                    echo $errorMsg;
-                }
-            }
-        );
-
-    }//end registerOutOfMemoryShutdownMessage()
 
 
 }//end class

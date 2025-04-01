@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 namespace League\Csv;
 
-use Deprecated;
-
 use function array_filter;
 use function array_map;
 use function array_reduce;
@@ -42,6 +40,11 @@ class FragmentFinder
     private const TYPE_COLUMN = 'col';
     private const TYPE_UNKNOWN = 'unknown';
 
+    public static function create(): self
+    {
+        return new self();
+    }
+
     /**
      * EXPERIMENTAL WARNING! This method implementation will change in the next major point release.
      *
@@ -52,9 +55,9 @@ class FragmentFinder
      * @throws SyntaxError
      * @return iterable<int, TabularDataReader>
      */
-    public function findAll(string $expression, TabularData $tabularData): iterable
+    public function findAll(string $expression, TabularDataReader $tabularDataReader): iterable
     {
-        return $this->find($this->parseExpression($expression, $tabularData), $tabularData);
+        return $this->find($this->parseExpression($expression, $tabularDataReader), $tabularDataReader);
     }
 
     /**
@@ -66,9 +69,9 @@ class FragmentFinder
      *
      * @throws SyntaxError
      */
-    public function findFirst(string $expression, TabularData $tabularData): ?TabularDataReader
+    public function findFirst(string $expression, TabularDataReader $tabularDataReader): ?TabularDataReader
     {
-        $fragment = $this->find($this->parseExpression($expression, $tabularData), $tabularData)[0];
+        $fragment = $this->find($this->parseExpression($expression, $tabularDataReader), $tabularDataReader)[0];
 
         return match ([]) {
             $fragment->first() => null,
@@ -86,14 +89,14 @@ class FragmentFinder
      * @throws SyntaxError
      * @throws FragmentNotFound if the expression can not be parsed
      */
-    public function findFirstOrFail(string $expression, TabularData $tabularData): TabularDataReader
+    public function findFirstOrFail(string $expression, TabularDataReader $tabularDataReader): TabularDataReader
     {
-        $parsedExpression = $this->parseExpression($expression, $tabularData);
+        $parsedExpression = $this->parseExpression($expression, $tabularDataReader);
         if ([] !== array_filter($parsedExpression['selections'], fn (array $selection) => -1 === $selection['start'])) {
             throw new FragmentNotFound('The expression `'.$expression.'` contains an invalid or an unsupported selection for the tabular data.');
         }
 
-        $fragment = $this->find($parsedExpression, $tabularData)[0];
+        $fragment = $this->find($parsedExpression, $tabularDataReader)[0];
 
         return match ([]) {
             $fragment->first() => throw new FragmentNotFound('No fragment found in the tabular data with the expression `'.$expression.'`.'),
@@ -108,13 +111,13 @@ class FragmentFinder
      *
      * @return array<int, TabularDataReader>
      */
-    private function find(array $parsedExpression, TabularData $tabularData): array
+    private function find(array $parsedExpression, TabularDataReader $tabularDataReader): array
     {
         ['type' => $type, 'selections' => $selections] = $parsedExpression;
 
         $selections = array_filter($selections, fn (array $selection) => -1 !== $selection['start']);
         if ([] === $selections) {
-            return [new ResultSet()];
+            return [ResultSet::createFromRecords()];
         }
 
         if (self::TYPE_ROW === $type) {
@@ -126,9 +129,9 @@ class FragmentFinder
             );
 
             return [
-                (new Statement())
+                Statement::create()
                     ->where($rowFilter)
-                    ->process($tabularData),
+                    ->process($tabularDataReader),
             ];
         }
 
@@ -140,17 +143,17 @@ class FragmentFinder
             );
 
             return [match ([]) {
-                $columns => new ResultSet(),
-                default => (new Statement())->select(...$columns)->process($tabularData),
+                $columns => ResultSet::createFromRecords(),
+                default => Statement::create()->select(...$columns)->process($tabularDataReader),
             }];
         }
 
         return array_map(
-            fn (array $selection) => (new Statement())
+            fn (array $selection) => Statement::create()
                 ->offset($selection['start'])
                 ->limit($selection['length'])
                 ->select(...$selection['columns'])
-                ->process($tabularData),
+                ->process($tabularDataReader),
             $selections
         );
     }
@@ -158,7 +161,7 @@ class FragmentFinder
     /**
      * @return array{type:string, selections:non-empty-array<selection>}
      */
-    private function parseExpression(string $expression, TabularData $tabularData): array
+    private function parseExpression(string $expression, TabularDataReader $tabularDataReader): array
     {
         if (1 !== preg_match(self::REGEXP_URI_FRAGMENT, $expression, $matches)) {
             return [
@@ -182,8 +185,8 @@ class FragmentFinder
             explode(';', $matches['selections']),
             fn (array $selections, string $selection): array => [...$selections, match ($type) {
                 self::TYPE_ROW => $this->parseRowSelection($selection),
-                self::TYPE_COLUMN => $this->parseColumnSelection($selection, $tabularData),
-                default => $this->parseCellSelection($selection, $tabularData),
+                self::TYPE_COLUMN => $this->parseColumnSelection($selection, $tabularDataReader),
+                default => $this->parseCellSelection($selection, $tabularDataReader),
             }],
             []
         );
@@ -230,12 +233,12 @@ class FragmentFinder
     /**
      * @return selection
      */
-    private function parseColumnSelection(string $selection, TabularData $tabularData): array
+    private function parseColumnSelection(string $selection, TabularDataReader $tabularDataReader): array
     {
         [$start, $end] = $this->parseRowColumnSelection($selection);
-        $header = $tabularData->getHeader();
+        $header = $tabularDataReader->getHeader();
         if ([] === $header) {
-            $header = $tabularData->nth(0);
+            $header = $tabularDataReader->first();
         }
 
         $nbColumns = count($header);
@@ -311,7 +314,7 @@ class FragmentFinder
     /**
      * @return selection
      */
-    private function parseCellSelection(string $selection, TabularData $tabularData): array
+    private function parseCellSelection(string $selection, TabularDataReader $tabularDataReader): array
     {
         if (1 !== preg_match(self::REGEXP_CELLS_SELECTION, $selection, $found)) {
             return [
@@ -338,9 +341,9 @@ class FragmentFinder
         --$cellStartRow;
         --$cellStartCol;
 
-        $header = $tabularData->getHeader();
+        $header = $tabularDataReader->getHeader();
         if ([] === $header) {
-            $header = $tabularData->nth(0);
+            $header = $tabularDataReader->first();
         }
 
         $nbColumns = count($header);
@@ -409,20 +412,5 @@ class FragmentFinder
             'length' => $cellEndRow - $cellStartRow + 1,
             'columns' => range($cellStartCol, ($cellEndCol > $nbColumns - 1) ? $nbColumns - 1 : $cellEndCol),
         ];
-    }
-
-    /**
-     * DEPRECATION WARNING! This method will be removed in the next major point release.
-     *
-     * @see FragmentFinder::__construct()
-     * @deprecated Since version 9.22.0
-     * @codeCoverageIgnore
-     *
-     * Returns a new instance.
-     */
-    #[Deprecated(message:'use League\Csv\FragmentFinder::__construct()', since:'league/csv:9.22.0')]
-    public static function create(): self
-    {
-        return new self();
     }
 }

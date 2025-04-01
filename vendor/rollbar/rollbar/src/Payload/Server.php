@@ -1,83 +1,76 @@
-<?php declare(strict_types=1);
+<?php namespace Rollbar\Payload;
 
-namespace Rollbar\Payload;
-
-use Rollbar\SerializerInterface;
-use Rollbar\UtilitiesTrait;
-
-class Server implements SerializerInterface
+class Server implements \Serializable
 {
-    use UtilitiesTrait;
-
-    private ?string $host = null;
-    private ?string $root = null;
-    private ?string $branch = null;
-    private ?string $codeVersion = null;
-    private array $extra = array();
+    private $host;
+    private $root;
+    private $branch;
+    private $codeVersion;
+    private $extra = array();
+    private $utilities;
 
     public function __construct()
     {
+        $this->utilities = new \Rollbar\Utilities();
     }
 
-    public function getHost(): ?string
+    public function getHost()
     {
         return $this->host;
     }
 
-    public function setHost(?string $host): self
+    public function setHost($host)
     {
         $this->host = $host;
         return $this;
     }
 
-    public function getRoot(): ?string
+    public function getRoot()
     {
         return $this->root;
     }
 
-    public function setRoot(?string $root): self
+    public function setRoot($root)
     {
         $this->root = $root;
         return $this;
     }
 
-    public function getBranch(): ?string
+    public function getBranch()
     {
         return $this->branch;
     }
 
-    public function setBranch(?string $branch): self
+    public function setBranch($branch)
     {
         $this->branch = $branch;
         return $this;
     }
 
-    public function getCodeVersion(): ?string
+    public function getCodeVersion()
     {
         return $this->codeVersion;
     }
 
-    public function setCodeVersion(?string $codeVersion): self
+    public function setCodeVersion($codeVersion)
     {
         $this->codeVersion = $codeVersion;
         return $this;
     }
 
-    public function setExtras(array $extras): self
+    public function setExtras($extras)
     {
         $this->extra = $extras;
-        return $this;
     }
 
-    public function getExtras(): array
+    public function getExtras()
     {
         return $this->extra;
     }
 
-    public function setArgv(array $argv): self
+    public function setArgv($argv)
     {
         $this->extra['argv'] = $argv;
-        return $this;
     }
 
     public function serialize()
@@ -92,6 +85,13 @@ class Server implements SerializerInterface
             $result[$key] = $val;
         }
         
-        return $this->utilities()->serializeForRollbarInternal($result, array_keys($this->extra));
+        $objectHashes = \Rollbar\Utilities::getObjectHashes();
+        
+        return $this->utilities->serializeForRollbar($result, array_keys($this->extra), $objectHashes);
+    }
+    
+    public function unserialize($serialized)
+    {
+        throw new \Exception('Not implemented yet.');
     }
 }

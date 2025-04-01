@@ -1,6 +1,4 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar\Handlers;
+<?php namespace Rollbar\Handlers;
 
 use Rollbar\Rollbar;
 use Rollbar\RollbarLogger;
@@ -23,10 +21,14 @@ class FatalHandler extends AbstractHandler
         parent::register();
     }
     
-    public function handle(...$args)
+    public function handle()
     {
-        parent::handle(...$args);
         
+        parent::handle();
+        
+        if (is_null($this->logger())) {
+            return;
+        }
         $lastError = error_get_last();
         
         if ($this->isFatal($lastError)) {
@@ -38,9 +40,8 @@ class FatalHandler extends AbstractHandler
             $exception = $this->logger()->
                                 getDataBuilder()->
                                 generateErrorWrapper($errno, $errstr, $errfile, $errline);
-            $exception->isUncaught = true;
-            $this->logger()->log(Level::CRITICAL, $exception, array());
-            unset($exception->isUncaught);
+                                
+            $this->logger()->log(Level::CRITICAL, $exception, array(), true);
         }
     }
     
@@ -54,7 +55,7 @@ class FatalHandler extends AbstractHandler
     protected function isFatal($lastError)
     {
         return
-            null !== $lastError &&
+            !is_null($lastError) &&
             in_array($lastError['type'], self::$fatalErrors, true) &&
             // don't log uncaught exceptions as they were handled by exceptionHandler()
             !(isset($lastError['message']) &&

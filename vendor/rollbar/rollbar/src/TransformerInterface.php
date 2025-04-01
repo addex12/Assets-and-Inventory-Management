@@ -1,17 +1,16 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
+<?php namespace Rollbar;
 
 use Rollbar\Payload\Level;
 use Rollbar\Payload\Payload;
-use Throwable;
 
 interface TransformerInterface
 {
-    public function transform(
-        Payload $payload,
-        Level|string $level,
-        mixed $toLog,
-        array $context = array ()
-    ): ?Payload;
+    /**
+     * @param Payload $payload
+     * @param Level $level
+     * @param \Exception | \Throwable $toLog
+     * @param $context
+     * @return Payload
+     */
+    public function transform(Payload $payload, $level, $toLog, $context);
 }

@@ -7,8 +7,8 @@ class ErrorWrapperTest extends BaseRollbarTest
     public function testBacktrace()
     {
         $errWrapper = new ErrorWrapper(
-            E_ERROR,
-            "",
+            null,
+            null,
             null,
             null,
             "FAKE BACKTRACE",

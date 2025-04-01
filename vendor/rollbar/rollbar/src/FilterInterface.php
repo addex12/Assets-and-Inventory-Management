@@ -1,10 +1,6 @@
-<?php declare(strict_types=1);
-
-namespace Rollbar;
-
-use Rollbar\Payload\Payload;
+<?php namespace Rollbar;
 
 interface FilterInterface
 {
-    public function shouldSend(Payload $payload, string $accessToken);
+    public function shouldSend($payload, $accessToken);
 }

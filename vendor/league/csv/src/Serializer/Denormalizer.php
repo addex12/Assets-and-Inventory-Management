@@ -161,7 +161,7 @@ final class Denormalizer
 
     /**
      * @param class-string $className
-     * @param array<array-key, mixed> $record
+     * @param array<?string> $record
      *
      * @throws DenormalizationFailed
      * @throws MappingFailed

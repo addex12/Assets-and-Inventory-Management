@@ -1,25 +1,23 @@
-<?php declare(strict_types=1);
-
-
+<?php
 
 namespace Rollbar\Senders;
 
 use Rollbar\Response;
 use Rollbar\Payload\Payload;
 use Rollbar\Payload\EncodedPayload;
-use Rollbar\UtilitiesTrait;
 
 class AgentSender implements SenderInterface
 {
-    use UtilitiesTrait;
+    private $utilities;
     private $agentLog;
     private $agentLogLocation;
 
     public function __construct($opts)
     {
         $this->agentLogLocation = \Rollbar\Defaults::get()->agentLogLocation();
+        $this->utilities = new \Rollbar\Utilities();
         if (array_key_exists('agentLogLocation', $opts)) {
-            $this->utilities()->validateString($opts['agentLogLocation'], 'opts["agentLogLocation"]', null, false);
+            $this->utilities->validateString($opts['agentLogLocation'], 'opts["agentLogLocation"]', null, false);
             $this->agentLogLocation = $opts['agentLogLocation'];
         }
     }
@@ -27,7 +25,7 @@ class AgentSender implements SenderInterface
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function send(EncodedPayload $payload, string $accessToken): Response
+    public function send(EncodedPayload $payload, $accessToken)
     {
         if (empty($this->agentLog)) {
             $this->loadAgentFile();
@@ -42,7 +40,7 @@ class AgentSender implements SenderInterface
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function sendBatch(array $batch, string $accessToken): void
+    public function sendBatch($batch, $accessToken)
     {
         if (empty($this->agentLog)) {
             $this->loadAgentFile();
@@ -55,7 +53,7 @@ class AgentSender implements SenderInterface
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function wait(string $accessToken, int $max)
+    public function wait($accessToken, $max)
     {
         return;
     }

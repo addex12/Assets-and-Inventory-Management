@@ -62,8 +62,6 @@ class JavascriptRenderer
 
     protected $useRequireJs = false;
 
-    protected $hideEmptyTabs = null;
-
     protected $initialization;
 
     protected $controls = array();
@@ -74,13 +72,11 @@ class JavascriptRenderer
 
     protected $ajaxHandlerBindToFetch = false;
 
-    protected $ajaxHandlerBindToJquery = false;
+    protected $ajaxHandlerBindToJquery = true;
 
-    protected $ajaxHandlerBindToXHR = true;
+    protected $ajaxHandlerBindToXHR = false;
 
     protected $ajaxHandlerAutoShow = true;
-
-    protected $ajaxHandlerEnableTab = false;
 
     protected $openHandlerClass = 'PhpDebugBar.OpenHandler';
 
@@ -159,9 +155,6 @@ class JavascriptRenderer
         if (array_key_exists('use_requirejs', $options)) {
             $this->setUseRequireJs($options['use_requirejs']);
         }
-        if (array_key_exists('hide_empty_tabs', $options)) {
-            $this->setHideEmptyTabs($options['hide_empty_tabs']);
-        }
         if (array_key_exists('controls', $options)) {
             foreach ($options['controls'] as $name => $control) {
                 $this->addControl($name, $control);
@@ -185,9 +178,6 @@ class JavascriptRenderer
         }
         if (array_key_exists('ajax_handler_auto_show', $options)) {
             $this->setAjaxHandlerAutoShow($options['ajax_handler_auto_show']);
-        }
-        if (array_key_exists('ajax_handler_enable_tab', $options)) {
-            $this->setAjaxHandlerEnableTab($options['ajax_handler_enable_tab']);
         }
         if (array_key_exists('open_handler_classname', $options)) {
             $this->setOpenHandlerClass($options['open_handler_classname']);
@@ -402,29 +392,6 @@ class JavascriptRenderer
         return $this->useRequireJs;
     }
 
-
-    /**
-     * Sets whether to hide empty tabs or not
-     *
-     * @param boolean $hide
-     * @return $this
-     */
-    public function setHideEmptyTabs($hide = true)
-    {
-        $this->hideEmptyTabs = $hide;
-        return $this;
-    }
-
-    /**
-     * Checks if empty tabs are hidden or not
-     *
-     * @return boolean
-     */
-    public function areEmptyTabsHidden()
-    {
-        return $this->hideEmptyTabs;
-    }
-
     /**
      * Adds a control to initialize
      *
@@ -542,7 +509,6 @@ class JavascriptRenderer
      * Sets whether to call bindToJquery() on the ajax handler
      *
      * @param boolean $bind
-     * @deprecated use setBindAjaxHandlerToXHR
      */
     public function setBindAjaxHandlerToJquery($bind = true)
     {
@@ -554,7 +520,6 @@ class JavascriptRenderer
      * Checks whether bindToJquery() will be called on the ajax handler
      *
      * @return boolean
-     * @deprecated use isAjaxHandlerBoundToXHR
      */
     public function isAjaxHandlerBoundToJquery()
     {
@@ -603,28 +568,6 @@ class JavascriptRenderer
     {
         return $this->ajaxHandlerAutoShow;
     }
-
-    /**
-     * Sets whether new ajax debug data will be shown in a separate tab instead of dropdown.
-     *
-     * @param boolean $enabled
-     */
-    public function setAjaxHandlerEnableTab($enabled = true)
-    {
-        $this->ajaxHandlerEnableTab = $enabled;
-        return $this;
-    }
-
-    /**
-     * Check if the Ajax Handler History tab is enabled
-     *
-     * @return boolean
-     */
-    public function isAjaxHandlerTabEnabled()
-    {
-        return $this->ajaxHandlerEnableTab;
-    }
-
 
     /**
      * Sets the class name of the js open handler
@@ -1064,7 +1007,7 @@ class JavascriptRenderer
     public function replaceTagInBuffer($here = true, $initialize = true, $renderStackedData = true, $head = false)
     {
         $render = ($head ? $this->renderHead() : "")
-            . $this->render($initialize, $renderStackedData);
+                . $this->render($initialize, $renderStackedData);
 
         $current = ($here && ob_get_level() > 0) ? ob_get_clean() : self::REPLACEABLE_TAG;
 
@@ -1103,10 +1046,6 @@ class JavascriptRenderer
 
         $nonce = $this->getNonceAttribute();
 
-        if ($nonce != '') {
-            $js = preg_replace("/<script>/", "<script nonce='{$this->cspNonce}'>", $js);
-        }
-
         if ($this->useRequireJs){
             return "<script type=\"text/javascript\"{$nonce}>\nrequire(['debugbar'], function(PhpDebugBar){ $js });\n</script>\n";
         } else {
@@ -1126,11 +1065,6 @@ class JavascriptRenderer
 
         if (($this->initialization & self::INITIALIZE_CONSTRUCTOR) === self::INITIALIZE_CONSTRUCTOR) {
             $js .= sprintf("var %s = new %s();\n", $this->variableName, $this->javascriptClass);
-        }
-
-        if ($this->hideEmptyTabs !== null) {
-            $js .= sprintf("%s.setHideEmptyTabs(%s);\n", $this->variableName,
-                json_encode($this->hideEmptyTabs));
         }
 
         if (($this->initialization & self::INITIALIZE_CONTROLS) === self::INITIALIZE_CONTROLS) {
@@ -1227,9 +1161,6 @@ class JavascriptRenderer
         // activate state restoration
         $js .= sprintf("%s.restoreState();\n", $varname);
 
-        if ($this->ajaxHandlerEnableTab) {
-            $js .= sprintf("%s.enableAjaxHandlerTab();\n", $varname);
-        }
         return $js;
     }
 
@@ -1245,7 +1176,7 @@ class JavascriptRenderer
     {
         $js = sprintf("%s.addDataSet(%s, \"%s\"%s);\n",
             $this->variableName,
-            json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_INVALID_UTF8_IGNORE),
+            json_encode($data),
             $requestId,
             $suffix ? ", " . json_encode($suffix) : ''
         );

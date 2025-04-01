@@ -9,10 +9,16 @@ use Doctrine\DBAL\Driver\AbstractException;
 use function assert;
 use function oci_error;
 
-/** @internal */
+/**
+ * @internal
+ *
+ * @psalm-immutable
+ */
 final class Error extends AbstractException
 {
-    /** @param resource $resource */
+    /**
+     * @param resource $resource
+     */
     public static function new($resource): self
     {
         $error = oci_error($resource);

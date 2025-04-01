@@ -1,17 +1,17 @@
-<?php declare(strict_types=1);
-
-
+<?php
 
 namespace Rollbar\Senders;
 
 use Fluent\Logger\FluentLogger;
 use Rollbar\Response;
 use Rollbar\Payload\EncodedPayload;
-use Rollbar\UtilitiesTrait;
 
 class FluentSender implements SenderInterface
 {
-    use UtilitiesTrait;
+    /**
+     * @var Utilities
+     */
+    private $utilities;
 
     /**
      * @var FluentLogger FluentLogger instance
@@ -44,32 +44,33 @@ class FluentSender implements SenderInterface
         $this->fluentPort = \Rollbar\Defaults::get()->fluentPort();
         $this->fluentTag = \Rollbar\Defaults::get()->fluentTag();
         
+        $this->utilities = new \Rollbar\Utilities();
         if (isset($opts['fluentHost'])) {
-            $this->utilities()->validateString($opts['fluentHost'], 'opts["fluentHost"]', null, false);
+            $this->utilities->validateString($opts['fluentHost'], 'opts["fluentHost"]', null, false);
             $this->fluentHost = $opts['fluentHost'];
         }
 
         if (isset($opts['fluentPort'])) {
-            $this->utilities()->validateInteger($opts['fluentPort'], 'opts["fluentPort"]', null, null, false);
+            $this->utilities->validateInteger($opts['fluentPort'], 'opts["fluentPort"]', null, null, false);
             $this->fluentPort = $opts['fluentPort'];
         }
 
         if (isset($opts['fluentTag'])) {
-            $this->utilities()->validateString($opts['fluentTag'], 'opts["fluentTag"]', null, false);
+            $this->utilities->validateString($opts['fluentTag'], 'opts["fluentTag"]', null, false);
             $this->fluentTag = $opts['fluentTag'];
         }
     }
 
 
     /**
-     * @param \Rollbar\Payload\EncodedPayload $payload
-     * @param string $accessToken
+     * @param \Rollbar\Payload\EncodedPayload $scrubbedPayload
+     * @param $accessToken
      * @return Response
      *
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter) Unused parameter is
-     * intended here to comply with SenderInterface
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter) Unsued parameter is
+     * intended here to comply to SenderInterface
      */
-    public function send(EncodedPayload $payload, string $accessToken): Response
+    public function send(EncodedPayload $payload, $accessToken)
     {
         if (empty($this->fluentLogger)) {
             $this->loadFluentLogger();
@@ -85,18 +86,19 @@ class FluentSender implements SenderInterface
         return new Response($status, $info, $uuid);
     }
 
-    public function sendBatch(array $batch, string $accessToken, &$responses = array ()): void
+    public function sendBatch($batch, $accessToken)
     {
         $responses = array();
         foreach ($batch as $payload) {
             $responses[] = $this->send($payload, $accessToken);
         }
+        return $responses;
     }
 
     /**
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
-    public function wait(string $accessToken, int $max)
+    public function wait($accessToken, $max)
     {
         return;
     }
