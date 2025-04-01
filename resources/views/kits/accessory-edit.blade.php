@@ -1,4 +1,5 @@
 @extends('layouts/edit-form', [
+    'title' => 'Edit User', 
     'createText' => {{ trans('admin/kits/general.append_accessory') }},
     'updateText' => {{ trans('admin/kits/general.update_appended_accessory') }},
     'formAction' => (isset($item->id)) ? route('kits.accessories.update', ['kit_id' => $kit->id, 'accessory_id' => $item->accessory_id]) : route('kits.accessories.store', ['kit_id' => $kit->id]),

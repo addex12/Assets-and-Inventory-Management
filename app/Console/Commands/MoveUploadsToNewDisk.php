@@ -1,42 +1,32 @@
 <?php
-
 namespace App\Console\Commands;
+
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\File; 
+use Illuminate\Support\Str;
+use App\Models\Asset;
+\Illuminate\Support\Facades\Log::debug($e);
 
 class MoveUploadsToNewDisk extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+
     protected $signature = 'snipeit:move-uploads {delete_local?}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
+
     protected $description = 'This will move your locally uploaded files to whatever your current disk is.';
 
-    /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
+
     public function __construct()
     {
         parent::__construct();
     }
 
-    /**
-     * Execute the console command.
-     *
-     * @return mixed
-     */
-    public function handle()
+
+
+     public function handle()
     {
         if (config('filesystems.default') == 'local') {
             $this->error('Your current disk is set to local so we cannot proceed.');
@@ -47,6 +37,10 @@ class MoveUploadsToNewDisk extends Command
         $delete_local = $this->argument('delete_local');
 
         $public_uploads['accessories'] = glob('public/uploads/accessories'."/*.*");
+            // Fix the invalid log statement
+            if (isset($e)) {
+                \Illuminate\Support\Facades\Log::debug($e);
+            }
         $public_uploads['assets'] = glob('public/uploads/assets'."/*.*");
         $public_uploads['avatars'] = glob('public/uploads/avatars'."/*.*");
         $public_uploads['categories'] = glob('public/uploads/categories'."/*.*");
@@ -64,21 +58,29 @@ class MoveUploadsToNewDisk extends Command
         foreach ($public_uploads as $public_type => $public_upload) {
             $type_count = 0;
             $this->info('- There are ' . count($public_upload) . ' PUBLIC ' . $public_type . ' files.');
-
+            $this->info('Copying files to ' . env('PUBLIC_AWS_URL') . '/uploads/' . $public_type . '/');
+            $this->info('This may take a while, so please be patient.');
+            $this->info('This will delete all of your local uploaded files. \n\nThis cannot be undone, so you should take a backup of your system before you proceed.\n');
             for ($i = 0; $i < count($public_upload); $i++) {
                 $type_count++;
                 $filename = basename($public_upload[$i]);
 
-                try  {
-                    Storage::disk('public')->put('uploads/'.$public_type.'/'.$filename, file_get_contents($public_upload[$i]));
-                    $new_url = Storage::disk('public')->url('uploads/'.$public_type.'/'.$filename, $filename);
-                    $this->info($type_count.'. PUBLIC: '.$filename.' was copied to '.$new_url);
+try {
+                    $this->info(''.$type_count.'. PUBLIC: '.$filename.'');
+                    $public_upload_count = count($public_upload);
+                    Storage::disk('public')->put('uploads/'.$public_type.'/'. $filename .'', file_get_contents($public_upload[$i]));
+                    $this->info(''.$type_count.'. PUBLIC: '.$filename.' was copied to uploads/'.$public_type.'/'.$filename);
+                    $this->info(''.$type_count.'. PUBLIC: '.$filename.' was copied to '.env('PUBLIC_AWS_URL').'/uploads/'.$public_type.'/'.$filename);
+                    $new_url = env('PUBLIC_AWS_URL').'/uploads/'.$public_type.'/'.$filename;                    $this->info($type_count.'. PUBLIC: '.$filename.' was copied to '.$new_url);
                 } catch (\Exception $e) {
-                    \Log::debug($e);
+                    $this->error(''.$type_count.'. PUBLIC: '.$filename.' was NOT copied to uploads/'.$public_type.'/'.$filename);
+                    \Illuminate\Support\Facades\Log::debug($e);
                     $this->error($e);
                 }
             }
-        }
+            $this->info("\n\n");
+            $this->info('!!!!!!!!!!!!!!!!!!!!!!!!!!!!! WARNING!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+        $this->info('- There are '. count($public_uploads).' PUBLIC file types.');
 
         $logos = glob("public/uploads/setting*.*");
         $this->info("- There are ".count($logos).' files that might be logos.');
@@ -116,12 +118,12 @@ class MoveUploadsToNewDisk extends Command
                         $new_url = Storage::url($private_type . '/' . $filename, $filename);
                         $this->info($type_count . '. PRIVATE: ' . $filename . ' was copied to ' . $new_url);
                     } catch (\Exception $e) {
-                        \Log::debug($e);
+                        Log::debug($e);
                         $this->error($e);
                     }
                 }
             }
-
+        }
 
             if ($delete_local == 'true') {
                 $public_delete_count = 0;
@@ -140,7 +142,7 @@ class MoveUploadsToNewDisk extends Command
                                 unlink($filename);
                                 $public_delete_count++;
                             } catch (\Exception $e) {
-                                \Log::debug($e);
+                                Log::debug($e);
                                 $this->error($e);
                             }
                         }
@@ -153,7 +155,7 @@ class MoveUploadsToNewDisk extends Command
                                 unlink($filename);
                                 $private_delete_count++;
                             } catch (\Exception $e) {
-                                \Log::debug($e);
+                                Log::debug($e);
                                 $this->error($e);
                             }
                         }
@@ -164,4 +166,5 @@ class MoveUploadsToNewDisk extends Command
             }
         }
     }
-}
+    }
+
