@@ -2,13 +2,9 @@
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/laravel-notification-channels/microsoft-teams.svg?style=flat-square)](https://packagist.org/packages/laravel-notification-channels/microsoft-teams)
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
-[![Build Status](https://img.shields.io/travis/laravel-notification-channels/microsoft-teams/master.svg?style=flat-square)](https://travis-ci.org/laravel-notification-channels/microsoft-teams)
-[![StyleCI](https://styleci.io/repos/258908498/shield)](https://styleci.io/repos/258908498)
-[![Quality Score](https://img.shields.io/scrutinizer/g/laravel-notification-channels/microsoft-teams.svg?style=flat-square)](https://scrutinizer-ci.com/g/laravel-notification-channels/microsoft-teams)
-[![Code Coverage](https://img.shields.io/scrutinizer/coverage/g/laravel-notification-channels/microsoft-teams/master.svg?style=flat-square)](https://scrutinizer-ci.com/g/laravel-notification-channels/microsoft-teams/?branch=master)
 [![Total Downloads](https://img.shields.io/packagist/dt/laravel-notification-channels/microsoft-teams.svg?style=flat-square)](https://packagist.org/packages/laravel-notification-channels/microsoft-teams)
 
-This package makes it easy to send notifications using [Microsoft Teams](https://products.office.com/en-US/microsoft-teams/group-chat-software) with Laravel 5.5+, 6.x, 7.x, 8.x and 9.x
+This package makes it easy to send notifications using [Microsoft Teams](https://products.office.com/en-US/microsoft-teams/group-chat-software) with Laravel 5.5+, 6.x, 7.x, 8.x, 9.x, 10.x and 11.x
 
 ```php
 return MicrosoftTeamsMessage::create()
@@ -47,7 +43,7 @@ composer require laravel-notification-channels/microsoft-teams
 
 Next, if you're using Laravel _without_ auto-discovery, add the service provider to `config/app.php`:
 
-```bash
+```php
 'providers' => [
     // ...
     NotificationChannels\MicrosoftTeams\MicrosoftTeamsServiceProvider::class,
@@ -117,7 +113,7 @@ Instead of adding the `to($url)` method for the recipient you can also add the `
 ```php
 public function routeNotificationForMicrosoftTeams(Notification $notification)
 {
-    return config('services.microsoft_teams.sales_url')
+    return config('services.microsoft_teams.sales_url');
 }
 ```
 

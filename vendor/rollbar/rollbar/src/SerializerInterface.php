@@ -2,9 +2,6 @@
 
 namespace Rollbar;
 
-/**
- * The base logic required by all internal JSON serializable objects.
- */
 interface SerializerInterface
 {
     /**

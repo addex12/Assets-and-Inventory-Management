@@ -1,5 +1,11 @@
 # Change Log
 
+## [2.3.0](https://github.com/php-slack/slack/releases/tag/2.3.0)
+ - Support PHP 8.1, 8.2, 8.3, 8.4
+   - Arguments with a null default must be nullable
+   - Test PHP 8.1 through 8.4
+   - Fix warnings for PHPUnit
+
 ## [2.2.1](https://github.com/php-slack/slack/releases/tag/2.2.1)
 - Update `.gitattributes`: Added /.styleci.yml export-ignore
 - Fix empty initial values in multi dynamic selects (fix #74)
