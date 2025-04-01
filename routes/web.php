@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Account;
+use pp\Http\Controllers\Account;
 use App\Http\Controllers\ActionlogController;
 use App\Http\Controllers\CategoriesController;
 use App\Http\Controllers\CompaniesController;
