@@ -25,6 +25,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ParentController;
+use App\Http\Controllers\InquiryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -138,6 +140,29 @@ Route::group(['middleware' => 'auth'], function () {
     * Employees
     */
     Route::resource('employees', EmployeeController::class);
+
+    /*
+    * Parents
+    */
+    Route::resource('parents', ParentController::class);
+
+    /*
+    * Inquiries
+    */
+    Route::resource('inquiries', InquiryController::class);
+});
+
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('display-sig/{filename}', [ActionlogController::class, 'displaySig'])->name('log.signature.view');
+    Route::get('stored-eula-file/{filename}', [ActionlogController::class, 'getStoredEula'])->name('log.storedeula.download');
+});
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('display-sig/{filename}', [ActionlogController::class, 'displaySig'])->name('log.signature.view');
+    Route::get('stored-eula-file/{filename}', [ActionlogController::class, 'getStoredEula'])->name('log.storedeula.download');
+});
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('display-sig/{filename}', [ActionlogController::class, 'displaySig'])->name('log.signature.view');
+    Route::get('stored-eula-file/{filename}', [ActionlogController::class, 'getStoredEula'])->name('log.storedeula.download');
 });
 
 /*
