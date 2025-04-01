@@ -1,8 +1,0 @@
-[25-Jul-2024 18:47:38 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home2/flipperschool/inventory.flipperschool.com/config/database.php:37
-Stack trace:
-#0 {main}
-  thrown in /home2/flipperschool/inventory.flipperschool.com/config/database.php on line 37
-[24-Sep-2024 23:18:57 UTC] PHP Fatal error:  Uncaught Error: Call to undefined function env() in /home2/flipperschool/inventory.flipperschool.com/config/database.php:37
-Stack trace:
-#0 {main}
-  thrown in /home2/flipperschool/inventory.flipperschool.com/config/database.php on line 37
