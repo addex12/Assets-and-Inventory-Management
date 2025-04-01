@@ -23,8 +23,21 @@ use App\Http\Controllers\ViewAssetsController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\SchoolController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ParentController;
+use App\Http\Controllers\InquiryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;  
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator as ValidatorFacade;
+use Illuminate\Support\Facades\Input;
+use Carbon\Carbon;
 
 Route::group(['middleware' => 'auth'], function () {
     /*
@@ -126,6 +139,39 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('departments', DepartmentsController::class, [
         'parameters' => ['department' => 'department_id'],
     ]);
+
+    /*
+    * Schools
+    */
+    Route::resource('schools', SchoolController::class);
+
+    /*
+    * Employees
+    */
+    Route::resource('employees', EmployeeController::class);
+
+    /*
+    * Parents
+    */
+    Route::resource('parents', ParentController::class);
+
+    /*
+    * Inquiries
+    */
+    Route::resource('inquiries', InquiryController::class);
+});
+
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('display-sig/{filename}', [ActionlogController::class, 'displaySig'])->name('log.signature.view');
+    Route::get('stored-eula-file/{filename}', [ActionlogController::class, 'getStoredEula'])->name('log.storedeula.download');
+});
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('display-sig/{filename}', [ActionlogController::class, 'displaySig'])->name('log.signature.view');
+    Route::get('stored-eula-file/{filename}', [ActionlogController::class, 'getStoredEula'])->name('log.storedeula.download');
+});
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('display-sig/{filename}', [ActionlogController::class, 'displaySig'])->name('log.signature.view');
+    Route::get('stored-eula-file/{filename}', [ActionlogController::class, 'getStoredEula'])->name('log.storedeula.download');
 });
 
 /*
@@ -541,3 +587,20 @@ Route::middleware(['auth'])->get(
     '/',
     [DashboardController::class, 'index']
 )->name('home');
+
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
+Route::middleware(['auth'])->get(
+    '/dashboard',
+    [DashboardController::class, 'index']
+)->name('dashboard');
