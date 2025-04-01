@@ -2,6 +2,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Parent;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class ParentController extends Controller
 {
@@ -21,9 +22,20 @@ class ParentController extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:parents',
+            'created_at' => 'nullable|date',
         ]);
 
-        Parent::create($request->all());
+        try {
+            $data = $request->all();
+            if (isset($data['created_at'])) {
+                $data['created_at'] = Carbon::parse($data['created_at']);
+            }
+            Parent::create($data);
+        } catch (\Exception $e) {
+            \Log::error('Invalid date input: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Invalid date input']);
+        }
+
         return redirect()->route('parents.index');
     }
 
@@ -88,71 +100,6 @@ class ParentController extends Controller
     {
         $reports = $parent->reports;
         return view('parents.reports', compact('reports'));
-    }
-    public function showAttendance(Parent $parent)
-    {
-        $attendance = $parent->attendance;
-        return view('parents.attendance', compact('attendance'));
-    }
-    public function showGrades(Parent $parent)
-    {
-        $grades = $parent->grades;
-        return view('parents.grades', compact('grades'));
-    }
-    public function showAssignments(Parent $parent)
-    {
-        $assignments = $parent->assignments;
-        return view('parents.assignments', compact('assignments'));
-    }
-    public function showExams(Parent $parent)
-    {
-        $exams = $parent->exams;
-        return view('parents.exams', compact('exams'));
-    }
-    public function showClasses(Parent $parent)
-    {
-        $classes = $parent->classes;
-        return view('parents.classes', compact('classes'));
-    }
-    public function showSubjects(Parent $parent)
-    {
-        $subjects = $parent->subjects;
-        return view('parents.subjects', compact('subjects'));
-    }
-    public function showSchools(Parent $parent)
-    {
-        $schools = $parent->schools;
-        return view('parents.schools', compact('schools'));
-    }
-    public function showDepartments(Parent $parent)
-    {
-        $departments = $parent->departments;
-        return view('parents.departments', compact('departments'));
-    }
-    public function showCourses(Parent $parent)
-    {
-        $courses = $parent->courses;
-        return view('parents.courses', compact('courses'));
-    }
-    public function showTimetables(Parent $parent)
-    {
-        $timetables = $parent->timetables;
-        return view('parents.timetables', compact('timetables'));
-    }
-    public function showMessages(Parent $parent)
-    {
-        $messages = $parent->messages;
-        return view('parents.messages', compact('messages'));
-    }
-    public function showNotifications(Parent $parent)
-    {
-        $notifications = $parent->notifications;
-        return view('parents.notifications', compact('notifications'));
-    }
-    public function showPayments(Parent $parent)
-    {
-        $payments = $parent->payments;
-        return view('parents.payments', compact('payments'));
     }
     public function showAttendance(Parent $parent)
     {

@@ -2,6 +2,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Inquiry;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class InquiryController extends Controller
 {
@@ -21,9 +22,20 @@ class InquiryController extends Controller
         $request->validate([
             'name' => 'required',
             'message' => 'required',
+            'created_at' => 'nullable|date',
         ]);
 
-        Inquiry::create($request->all());
+        try {
+            $data = $request->all();
+            if (isset($data['created_at'])) {
+                $data['created_at'] = Carbon::parse($data['created_at']);
+            }
+            Inquiry::create($data);
+        } catch (\Exception $e) {
+            \Log::error('Invalid date input: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Invalid date input']);
+        }
+
         return redirect()->route('inquiries.index');
     }
 
@@ -37,5 +49,4 @@ class InquiryController extends Controller
         $inquiry->delete();
         return redirect()->route('inquiries.index');
     }
-      
 }

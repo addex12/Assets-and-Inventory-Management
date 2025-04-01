@@ -2,6 +2,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Inquiry extends Model
 {
@@ -12,6 +13,28 @@ class Inquiry extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function setCreatedAtAttribute($value)
+    {
+        $this->attributes['created_at'] = $this->validateDate($value);
+    }
+
+    public function setUpdatedAtAttribute($value)
+    {
+        $this->attributes['updated_at'] = $this->validateDate($value);
+    }
+
+    private function validateDate($value)
+    {
+        try {
+            return Carbon::parse($value);
+        } catch (\Exception $e) {
+            // Log the error and return null or a default value
+            \Log::error('Invalid date input: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function school()
     {
         return $this->belongsTo(School::class);
