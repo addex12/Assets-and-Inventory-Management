@@ -1,16 +1,5 @@
 <?php
-
-/**
- * This file is part of the Carbon package.
- *
- * (c) Brian Nesbitt <brian@nesbot.com>
- *
- * For the full copyright and license information, please view the LICENSE
- * file that was distributed with this source code.
- */
-
 namespace Carbon\Traits;
-
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
@@ -95,7 +84,13 @@ trait Creator
             setlocale(LC_NUMERIC, $locale);
         }
 
-        self::setLastErrors(parent::getLastErrors());
+ $errors = parent::getLastErrors();
+self::setLastErrors(is_array($errors) ? $errors : [
+    'warning_count' => 0,
+    'warnings' => [],
+    'error_count' => 0,
+    'errors' => [],
+]);
     }
 
     /**
